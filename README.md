@@ -1,4 +1,4 @@
-btcd
+go-earthcoin
 ====
 
 [![Build Status](https://travis-ci.org/btcsuite/btcd.png?branch=master)](https://travis-ci.org/btcsuite/btcd)
