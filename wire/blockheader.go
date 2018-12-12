@@ -54,7 +54,7 @@ type BlockHeader struct {
 
 // blockHeaderLen is a constant that represents the number of bytes for a block
 // header.
-//blockHeaderLen是一个常量，表示块头的字节数。
+//blockHeaderLen是一个常量，表示块头的字节数。在比特币里面，表示哈希值前面有多少个0。
 const blockHeaderLen = 80
 
 // BlockHash computes the block identifier hash for the given block header.
