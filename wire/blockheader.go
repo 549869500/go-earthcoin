@@ -44,11 +44,11 @@ type BlockHeader struct {
 	Timestamp time.Time
 
 	// Difficulty target for the block.
-	//块的难度目标。
+	//块的难度目标，在比特币里面，表示哈希值前面有多少个0。
 	Bits uint32
 
 	// Nonce used to generate the block.
-	//Nonce用于生成块。
+	//Nonce用于生成块,工作量证明计数器。
 	Nonce uint32
 }
 
