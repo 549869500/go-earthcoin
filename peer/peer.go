@@ -1318,6 +1318,8 @@ cleanup:
 
 // inHandler handles all incoming messages for the peer.  It must be run as a
 // goroutine.
+//通过tcp协议连接外部节点，打开自己的tcp服务器；同时用于接收比特币协议数据
+// inHandler处理节点的所有传入消息。 它必须作为goroutine运行。
 func (p *Peer) inHandler() {
 	// The timer is stopped when a new message is received and reset after it
 	// is processed.

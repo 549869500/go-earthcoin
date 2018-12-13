@@ -29,32 +29,36 @@ import (
 
 // AddrManager provides a concurrency safe address manager for caching potential
 // peers on the bitcoin network.
+// 定义地址管理器
+// AddrManager提供了一个并发安全地址管理器，用于缓存比特币网络上的潜在节点。
+// 作用：定时将节点连接信息保存至文件
 type AddrManager struct {
 	mtx            sync.Mutex
-	peersFile      string
+	peersFile      string //保存在文件中的连接节点信息
 	lookupFunc     func(string) ([]net.IP, error)
 	rand           *rand.Rand
 	key            [32]byte
-	addrIndex      map[string]*KnownAddress // address key to ka for all addrs.
-	addrNew        [newBucketCount]map[string]*KnownAddress
-	addrTried      [triedBucketCount]*list.List
+	addrIndex      map[string]*KnownAddress                 // addrNew 与 addrTried地址集合 address key to ka for all addrs.
+	addrNew        [newBucketCount]map[string]*KnownAddress //map[桶树编号][地址map集合]，未被确定可连接的集合
+	addrTried      [triedBucketCount]*list.List             //连接成功集合
 	started        int32
 	shutdown       int32
 	wg             sync.WaitGroup
 	quit           chan struct{}
-	nTried         int
-	nNew           int
+	nTried         int //addrTried大小
+	nNew           int //addrNew大小
 	lamtx          sync.Mutex
 	localAddresses map[string]*localAddress
 }
 
+//定义序列化已知地址
 type serializedKnownAddress struct {
 	Addr        string
 	Src         string
-	Attempts    int
+	Attempts    int //连接次数
 	TimeStamp   int64
-	LastAttempt int64
-	LastSuccess int64
+	LastAttempt int64 // 最后一次连接时间
+	LastSuccess int64 // 最后一次成功连接时间
 	// no refcount or tried, that is available from context.
 }
 
@@ -569,6 +573,10 @@ func (a *AddrManager) Stop() error {
 // AddAddresses adds new addresses to the address manager.  It enforces a max
 // number of addresses and silently ignores duplicate addresses.  It is
 // safe for concurrent access.
+// AddAddresses向地址管理器添加新地址。 它强制执行最大数量的地址，并静默忽略重复的地址。
+// 并发访问是安全的。
+// 1.如果地址不存在，将地址添加到addrNew
+// 2. 如果地址存在，更新地址连接属性
 func (a *AddrManager) AddAddresses(addrs []*wire.NetAddress, srcAddr *wire.NetAddress) {
 	a.mtx.Lock()
 	defer a.mtx.Unlock()
@@ -581,6 +589,10 @@ func (a *AddrManager) AddAddresses(addrs []*wire.NetAddress, srcAddr *wire.NetAd
 // AddAddress adds a new address to the address manager.  It enforces a max
 // number of addresses and silently ignores duplicate addresses.  It is
 // safe for concurrent access.
+// AddAddresses向地址管理器添加新地址。 它强制执行最大数量的地址，并静默忽略重复的地址。
+// 并发访问是安全的。
+// 1.如果地址不存在，将地址添加到addrNew
+// 2. 如果地址存在，更新地址连接属性
 func (a *AddrManager) AddAddress(addr, srcAddr *wire.NetAddress) {
 	a.mtx.Lock()
 	defer a.mtx.Unlock()
@@ -738,6 +750,10 @@ func NetAddressKey(na *wire.NetAddress) string {
 // random one from the possible addresses with preference given to ones that
 // have not been used recently and should not pick 'close' addresses
 // consecutively.
+// GetAddress返回一个应该可路由的地址。 它从可能的地址中选择一个随机的地址，
+// 优先考虑最近没有使用的地址，不应连续选择“已关闭”地址。
+// 1.从addrTried提供有效IP
+// 2.从addrNew提供IP
 func (a *AddrManager) GetAddress() *KnownAddress {
 	// Protect concurrent access.
 	a.mtx.Lock()
@@ -829,6 +845,9 @@ func (a *AddrManager) Attempt(addr *wire.NetAddress) {
 // Connected Marks the given address as currently connected and working at the
 // current time.  The address must already be known to AddrManager else it will
 // be ignored.
+// Connected函数将给定地址标记为当前连接并在当前时间工作。 该地址必须已为AddrManager所知，
+// 否则将被忽略。
+// 1.更新地址属性信息
 func (a *AddrManager) Connected(addr *wire.NetAddress) {
 	a.mtx.Lock()
 	defer a.mtx.Unlock()
@@ -852,6 +871,12 @@ func (a *AddrManager) Connected(addr *wire.NetAddress) {
 // Good marks the given address as good.  To be called after a successful
 // connection and version exchange.  If the address is unknown to the address
 // manager it will be ignored.
+// Good将给定的地址标记为好。 在成功连接和版本交换后调用。 如果地址管理器不知道该地址，
+// 则将忽略该地址。
+// 1. server通知地址管理哪个IP Addr为有效地址
+// 2. 更新lastsuccess、lastattemp、attemps字段
+// 3. 同时从addrNew中删除该IP地址
+// 4. 该IP添加到addrTried桶树
 func (a *AddrManager) Good(addr *wire.NetAddress) {
 	a.mtx.Lock()
 	defer a.mtx.Unlock()

@@ -96,6 +96,8 @@ func (c *ConnReq) String() string {
 }
 
 // Config holds the configuration options related to the connection manager.
+// 定义连接管理器
+// 作用：开启监听handleConnected与handleDisconnected服务
 type Config struct {
 	// Listeners defines a slice of listeners for which the connection
 	// manager will take ownership of and accept connections.  When a
@@ -358,6 +360,9 @@ out:
 
 // NewConnReq creates a new connection request and connects to the
 // corresponding address.
+// NewConnReq创建一个新的连接请求并连接到相应的地址。
+// 调用地址管理获取一个ip，并连接。如果连接成功，调用  handleConnected服务；
+// 如果连接失败，调用handleDisconnected服务。
 func (cm *ConnManager) NewConnReq() {
 	if atomic.LoadInt32(&cm.stop) != 0 {
 		return
@@ -404,6 +409,9 @@ func (cm *ConnManager) NewConnReq() {
 
 // Connect assigns an id and dials a connection to the address of the
 // connection request.
+// Connect分配一个id并拨打连接到连接请求的地址。
+// 根据链接结果调用handleConnected或handleDisconnected服务。
+// 当调用handleConnected时，服务调用OnConnection函数，开辟协程处理Peer服务。
 func (cm *ConnManager) Connect(c *ConnReq) {
 	if atomic.LoadInt32(&cm.stop) != 0 {
 		return
@@ -451,6 +459,8 @@ func (cm *ConnManager) Connect(c *ConnReq) {
 // Disconnect disconnects the connection corresponding to the given connection
 // id. If permanent, the connection will be retried with an increasing backoff
 // duration.
+// 断开连接断开与给定连接ID对应的连接。 如果是永久性的，则将以增加的退避持续时间重试连接。
+// 调用handleDisconnected服务
 func (cm *ConnManager) Disconnect(id uint64) {
 	if atomic.LoadInt32(&cm.stop) != 0 {
 		return

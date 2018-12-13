@@ -157,14 +157,16 @@ type orphanTx struct {
 // TxPool is used as a source of transactions that need to be mined into blocks
 // and relayed to other peers.  It is safe for concurrent access from multiple
 // peers.
+// 定义交易池结构, 交易池TxPool是用来管理所有接收到的交易Tx。
+// 交易池用作需要挖掘成块并转发给其他节点的事务源。 来自多个节点的并发访问是安全的。
 type TxPool struct {
 	// The following variables must only be used atomically.
 	lastUpdated int64 // last time pool was updated
 
 	mtx           sync.RWMutex
 	cfg           Config
-	pool          map[chainhash.Hash]*TxDesc
-	orphans       map[chainhash.Hash]*orphanTx
+	pool          map[chainhash.Hash]*TxDesc   //交易池
+	orphans       map[chainhash.Hash]*orphanTx //孤立交易池
 	orphansByPrev map[wire.OutPoint]map[chainhash.Hash]*btcutil.Tx
 	outpoints     map[wire.OutPoint]*btcutil.Tx
 	pennyTotal    float64 // exponentially decaying total for penny spends.

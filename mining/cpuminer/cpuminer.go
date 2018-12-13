@@ -296,6 +296,13 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, blockHeight int32,
 // is submitted.
 //
 // It must be run as a goroutine.
+
+// generate Blocks是一个由挖掘工作者控制器控制的工作者。
+//它是自包含的，它创建块模板并尝试解决它们，同时检测它何时执行过时的工作和反应
+//相应地生成一个新的块模板。 当块被解决时，它被提交。
+//
+//它必须作为goroutine运行。
+//定时获取交易池TxPool中的交易池Tx 算出头Hash，遍历*maxExtraNonce*int64数，输出一定难度值的hash值。
 func (m *CPUMiner) generateBlocks(quit chan struct{}) {
 	log.Tracef("Starting generate blocks worker")
 
