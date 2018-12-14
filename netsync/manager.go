@@ -421,6 +421,7 @@ func (sm *SyncManager) handleDonePeerMsg(peer *peerpkg.Peer) {
 }
 
 // handleTxMsg handles transaction messages from all peers.
+// handleTxMsg处理来自所有节点的事务消息。
 func (sm *SyncManager) handleTxMsg(tmsg *txMsg) {
 	peer := tmsg.peer
 	state, exists := sm.peerStates[peer]
@@ -1149,6 +1150,21 @@ func (sm *SyncManager) limitMap(m map[chainhash.Hash]struct{}, limit int) {
 // single thread without needing to lock memory data structures.  This is
 // important because the sync manager controls which blocks are needed and how
 // the fetching should proceed.
+// blockHandler是同步管理器的主要处理程序。 它必须作为协程运行。 
+// 它在来自对等处理程序的单独协程中处理块和inv消息，
+// 因此块（MsgBlock）消息由单个线程处理，而无需锁定内存数据结构。 
+// 这很重要，因为同步管理器控制需要哪些块以及如何进行提取。
+
+
+ // 1. handleTxMsg 处理交易入口
+ // 2. 检测该交易Hash是否已经存在于交易池或者孤立池
+ // 3. 检查交易大小金额是否正确
+ // 4. 检查是否有双花
+ // 5. 检查交易输入是否有效、签名等
+ // 6. 策略过滤
+ // 7. 将交易封装加入到交易池，更新lastUpdate
+ // 8.如果输入不存在，则进入孤立交易处理流程
+
 func (sm *SyncManager) blockHandler() {
 out:
 	for {
@@ -1159,6 +1175,7 @@ out:
 				sm.handleNewPeerMsg(msg.peer)
 
 			case *txMsg:
+				//处理交易入口
 				sm.handleTxMsg(msg)
 				msg.reply <- struct{}{}
 
@@ -1441,10 +1458,11 @@ func (sm *SyncManager) Pause() chan<- struct{} {
 // block, tx, and inv updates.
 func New(config *Config) (*SyncManager, error) {
 	sm := SyncManager{
-		peerNotifier:    config.PeerNotifier,
-		chain:           config.Chain,
-		txMemPool:       config.TxMemPool,
-		chainParams:     config.ChainParams,
+		peerNotifier: config.PeerNotifier,
+		chain:        config.Chain,
+		txMemPool:    config.TxMemPool,
+		chainParams:  config.ChainParams,
+		//拒绝的交易集合
 		rejectedTxns:    make(map[chainhash.Hash]struct{}),
 		requestedTxns:   make(map[chainhash.Hash]struct{}),
 		requestedBlocks: make(map[chainhash.Hash]struct{}),

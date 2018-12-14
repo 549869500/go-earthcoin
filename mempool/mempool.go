@@ -28,6 +28,8 @@ const (
 	// priority / low-fee transactions.  It is used to help determine which
 	// are allowed into the mempool and consequently affects their relay and
 	// inclusion when generating block templates.
+	// DefaultBlockPrioritySize是高优先级/低费用事务的默认大小（以字节为单位）。
+	// 它用于帮助确定哪些允许进入mempool，从而在生成块模板时影响它们的继电器和包含。
 	DefaultBlockPrioritySize = 50000
 
 	// orphanTTL is the maximum amount of time an orphan is allowed to
@@ -37,117 +39,156 @@ const (
 
 	// orphanExpireScanInterval is the minimum amount of time in between
 	// scans of the orphan pool to evict expired transactions.
+	// orphanTTL是孤立块池在到期之前被允许留在孤立池中的最长时间，
+	// 并且在下一次扫描期间被驱逐。
 	orphanExpireScanInterval = time.Minute * 5
 )
 
 // Tag represents an identifier to use for tagging orphan transactions.  The
 // caller may choose any scheme it desires, however it is common to use peer IDs
 // so that orphans can be identified by which peer first relayed them.
+// Tag表示用于标记孤立事务的标识符。 呼叫者可以选择它想要的任何方案，但是通常使用节点ID，
+// 以便可以通过哪个节点首先中继它们来识别孤立块。
 type Tag uint64
 
 // Config is a descriptor containing the memory pool configuration.
+// Config是包含内存池配置的描述符。
 type Config struct {
 	// Policy defines the various mempool configuration options related
 	// to policy.
+	// Policy定义了与策略相关的各种mempool配置选项。
 	Policy Policy
 
 	// ChainParams identifies which chain parameters the txpool is
 	// associated with.
+	// ChainParams识别txpool与哪些链参数相关联。
 	ChainParams *chaincfg.Params
 
 	// FetchUtxoView defines the function to use to fetch unspent
 	// transaction output information.
+	// FetchUtxoView定义用于获取未使用的事务输出信息的函数。
 	FetchUtxoView func(*btcutil.Tx) (*blockchain.UtxoViewpoint, error)
 
 	// BestHeight defines the function to use to access the block height of
 	// the current best chain.
+	// BestHeight定义用于访问当前最佳链的块高度的函数。
 	BestHeight func() int32
 
 	// MedianTimePast defines the function to use in order to access the
 	// median time past calculated from the point-of-view of the current
 	// chain tip within the best chain.
+	// MedianTimePast定义要使用的函数，以便访问从最佳链中当前链尖的视点计算的过去的
+	// 中值时间。
 	MedianTimePast func() time.Time
 
 	// CalcSequenceLock defines the function to use in order to generate
 	// the current sequence lock for the given transaction using the passed
 	// utxo view.
+	// CalcSequenceLock定义要使用的函数，以便使用传递的utxo视图为给定的事务生成当前
+	// 序列锁。
 	CalcSequenceLock func(*btcutil.Tx, *blockchain.UtxoViewpoint) (*blockchain.SequenceLock, error)
 
 	// IsDeploymentActive returns true if the target deploymentID is
 	// active, and false otherwise. The mempool uses this function to gauge
 	// if transactions using new to be soft-forked rules should be allowed
 	// into the mempool or not.
+	//如果目标deploymentID处于活动状态，则IsDeploymentActive返回true，否则返回false。
+	//mempool使用此函数来判断是否应允许使用new作为软分叉规则的事务进入mempool。
 	IsDeploymentActive func(deploymentID uint32) (bool, error)
 
 	// SigCache defines a signature cache to use.
+	// SigCache定义要使用的签名缓存。
 	SigCache *txscript.SigCache
 
 	// HashCache defines the transaction hash mid-state cache to use.
+	// HashCache定义要使用的事务哈希中间状态缓存。
 	HashCache *txscript.HashCache
 
 	// AddrIndex defines the optional address index instance to use for
 	// indexing the unconfirmed transactions in the memory pool.
 	// This can be nil if the address index is not enabled.
+	// AddrIndex定义可选的地址索引实例，用于索引内存池中未确认的事务。
+	//如果未启用地址索引，则此值可以为nil。
 	AddrIndex *indexers.AddrIndex
 
 	// FeeEstimatator provides a feeEstimator. If it is not nil, the mempool
 	// records all new transactions it observes into the feeEstimator.
+	// FeeEstimatator提供费用估算器。
+	// 如果它不是零，则mempool将它观察到的所有新事务记录到feeEstimator中。
 	FeeEstimator *FeeEstimator
 }
 
 // Policy houses the policy (configuration parameters) which is used to
 // control the mempool.
+// 策略包含用于控制mempool的策略（配置参数）。
 type Policy struct {
 	// MaxTxVersion is the transaction version that the mempool should
 	// accept.  All transactions above this version are rejected as
 	// non-standard.
+	// MaxTxVersion是mempool应该接受的事务版本。
+	// 此版本以上的所有交易均被拒绝为非标准交易。
 	MaxTxVersion int32
 
 	// DisableRelayPriority defines whether to relay free or low-fee
 	// transactions that do not have enough priority to be relayed.
+	// DisableRelayPriority定义是否中继没有足够优先级的免费或低费用交易。
 	DisableRelayPriority bool
 
 	// AcceptNonStd defines whether to accept non-standard transactions. If
 	// true, non-standard transactions will be accepted into the mempool.
 	// Otherwise, all non-standard transactions will be rejected.
+	// AcceptNonStd定义是否接受非标准事务。
+	// 如果为true，则非标准事务将被接受到mempool中。
+	// 否则，所有非标准交易都将被拒绝。
 	AcceptNonStd bool
 
 	// FreeTxRelayLimit defines the given amount in thousands of bytes
 	// per minute that transactions with no fee are rate limited to.
+	// FreeTxRelayLimit定义了每分钟数千字节的给定数量，交易不收取任何费用。
 	FreeTxRelayLimit float64
 
 	// MaxOrphanTxs is the maximum number of orphan transactions
 	// that can be queued.
+	// MaxOrphanTxs是可以排队的最大孤立事务数。
 	MaxOrphanTxs int
 
 	// MaxOrphanTxSize is the maximum size allowed for orphan transactions.
 	// This helps prevent memory exhaustion attacks from sending a lot of
 	// of big orphans.
+	// MaxOrphanTxSize是孤立事务允许的最大大小。
+	//这有助于防止内存耗尽攻击发送大量孤立块。
 	MaxOrphanTxSize int
 
 	// MaxSigOpCostPerTx is the cumulative maximum cost of all the signature
 	// operations in a single transaction we will relay or mine.  It is a
 	// fraction of the max signature operations for a block.
+	// MaxSigOpCostPerTx是我们将中继或挖掘的单个事务中所有签名操作的累积最大成本。
+	// 它是块的最大签名操作的一部分。
 	MaxSigOpCostPerTx int
 
 	// MinRelayTxFee defines the minimum transaction fee in BTC/kB to be
 	// considered a non-zero fee.
+	// MinRelayTxFee定义BTC / kB中的最低交易费用被视为非零费用。
 	MinRelayTxFee btcutil.Amount
 }
 
 // TxDesc is a descriptor containing a transaction in the mempool along with
 // additional metadata.
+// TxDesc是一个描述符，包含mempool中的事务以及其他元数据。
 type TxDesc struct {
 	mining.TxDesc
 
 	// StartingPriority is the priority of the transaction when it was added
 	// to the pool.
+	// StartingPriority是将事务添加到池中时的优先级。
 	StartingPriority float64
 }
 
 // orphanTx is normal transaction that references an ancestor transaction
 // that is not yet available.  It also contains additional information related
 // to it such as an expiration time to help prevent caching the orphan forever.
+// orphanTx是引用尚不可用的祖先事务的普通事务。
+// 它还包含与其相关的其他信息，例如过期时间，以帮助防止永久缓存孤立块。
 type orphanTx struct {
 	tx         *btcutil.Tx
 	tag        Tag
@@ -161,33 +202,44 @@ type orphanTx struct {
 // 交易池用作需要挖掘成块并转发给其他节点的事务源。 来自多个节点的并发访问是安全的。
 type TxPool struct {
 	// The following variables must only be used atomically.
-	lastUpdated int64 // last time pool was updated
+	//以下变量只能以原子方式使用。
+	lastUpdated int64 // 最后一次更新内存池时间 last time pool was updated
 
-	mtx           sync.RWMutex
-	cfg           Config
-	pool          map[chainhash.Hash]*TxDesc   //交易池
-	orphans       map[chainhash.Hash]*orphanTx //孤立交易池
+	mtx     sync.RWMutex
+	cfg     Config
+	pool    map[chainhash.Hash]*TxDesc   //交易池
+	orphans map[chainhash.Hash]*orphanTx //孤立交易池
+	//后向指针，指向子节点
 	orphansByPrev map[wire.OutPoint]map[chainhash.Hash]*btcutil.Tx
 	outpoints     map[wire.OutPoint]*btcutil.Tx
-	pennyTotal    float64 // exponentially decaying total for penny spends.
-	lastPennyUnix int64   // unix time of last ``penny spend''
+	//小钱的指数衰减总计。
+	pennyTotal float64 // exponentially decaying total for penny spends.
+	//UNIX时间/最后一分钱花费
+	lastPennyUnix int64 // unix time of last ``penny spend''
 
 	// nextExpireScan is the time after which the orphan pool will be
 	// scanned in order to evict orphans.  This is NOT a hard deadline as
 	// the scan will only run when an orphan is added to the pool as opposed
 	// to on an unconditional timer.
+	//nextExpireScan是对孤立块池进行扫描以驱逐孤立块的时间。这不是一个严格的最后期限，
+	//因为只有当孤立块被添加到池中时，扫描才会运行，而不是在无条件计时器上。
 	nextExpireScan time.Time
 }
 
 // Ensure the TxPool type implements the mining.TxSource interface.
+//确保TxPool类型实现了mining.TxSource接口。
 var _ mining.TxSource = (*TxPool)(nil)
 
 // removeOrphan is the internal function which implements the public
 // RemoveOrphan.  See the comment for RemoveOrphan for more details.
 //
-// This function MUST be called with the mempool lock held (for writes).
+// removeOrphan是实现公共RemoveOrphan的内部函数。
+// 有关详细信息，请参阅RemoveOrphan的注释。
+//
+//必须在保持mempool锁（用于写入）的情况下调用此函数。
 func (mp *TxPool) removeOrphan(tx *btcutil.Tx, removeRedeemers bool) {
 	// Nothing to do if passed tx is not an orphan.
+	//如果传递tx没有什么可以做的不是孤立块。
 	txHash := tx.Hash()
 	otx, exists := mp.orphans[*txHash]
 	if !exists {
@@ -195,6 +247,7 @@ func (mp *TxPool) removeOrphan(tx *btcutil.Tx, removeRedeemers bool) {
 	}
 
 	// Remove the reference from the previous orphan index.
+	//从先前的孤立索引中删除引用。
 	for _, txIn := range otx.tx.MsgTx().TxIn {
 		orphans, exists := mp.orphansByPrev[txIn.PreviousOutPoint]
 		if exists {
@@ -202,6 +255,7 @@ func (mp *TxPool) removeOrphan(tx *btcutil.Tx, removeRedeemers bool) {
 
 			// Remove the map entry altogether if there are no
 			// longer any orphans which depend on it.
+			//如果不再有依赖它的孤立块，则完全删除地图条目。
 			if len(orphans) == 0 {
 				delete(mp.orphansByPrev, txIn.PreviousOutPoint)
 			}
@@ -209,6 +263,7 @@ func (mp *TxPool) removeOrphan(tx *btcutil.Tx, removeRedeemers bool) {
 	}
 
 	// Remove any orphans that redeem outputs from this one if requested.
+	//如果请求，删除任何从此一个兑换输出的孤立块。
 	if removeRedeemers {
 		prevOut := wire.OutPoint{Hash: *txHash}
 		for txOutIdx := range tx.MsgTx().TxOut {
@@ -220,6 +275,7 @@ func (mp *TxPool) removeOrphan(tx *btcutil.Tx, removeRedeemers bool) {
 	}
 
 	// Remove the transaction from the orphan pool.
+	//从孤立池中删除事务。
 	delete(mp.orphans, *txHash)
 }
 
@@ -227,6 +283,9 @@ func (mp *TxPool) removeOrphan(tx *btcutil.Tx, removeRedeemers bool) {
 // previous orphan index.
 //
 // This function is safe for concurrent access.
+// RemoveOrphan从孤立池和先前的孤立索引中删除传递的孤立事务。
+//
+//此函数对于并发访问是安全的。
 func (mp *TxPool) RemoveOrphan(tx *btcutil.Tx) {
 	mp.mtx.Lock()
 	mp.removeOrphan(tx, false)
@@ -237,6 +296,9 @@ func (mp *TxPool) RemoveOrphan(tx *btcutil.Tx) {
 // identifier.
 //
 // This function is safe for concurrent access.
+// RemoveOrphansByTag删除所有使用提供的标识符标记的孤立事务。
+//
+//此函数对于并发访问是安全的。
 func (mp *TxPool) RemoveOrphansByTag(tag Tag) uint64 {
 	var numEvicted uint64
 	mp.mtx.Lock()
@@ -254,6 +316,10 @@ func (mp *TxPool) RemoveOrphansByTag(tag Tag) uint64 {
 // orphan if adding a new one would cause it to overflow the max allowed.
 //
 // This function MUST be called with the mempool lock held (for writes).
+// limitNumOrphans通过驱逐随机孤立来限制孤立事务的数量，
+// 如果添加新的孤立将导致它溢出允许的最大值。
+//
+//必须在保持mempool锁（用于写入）的情况下调用此函数。
 func (mp *TxPool) limitNumOrphans() error {
 	// Scan through the orphan pool and remove any expired orphans when it's
 	// time.  This is done for efficiency so the scan only happens
@@ -306,6 +372,9 @@ func (mp *TxPool) limitNumOrphans() error {
 // addOrphan adds an orphan transaction to the orphan pool.
 //
 // This function MUST be called with the mempool lock held (for writes).
+// addOrphan将一个孤立事务添加到孤立池中。
+//
+//必须在保持mempool锁（用于写入）的情况下调用此函数。
 func (mp *TxPool) addOrphan(tx *btcutil.Tx, tag Tag) {
 	// Nothing to do if no orphans are allowed.
 	if mp.cfg.Policy.MaxOrphanTxs <= 0 {
@@ -337,6 +406,9 @@ func (mp *TxPool) addOrphan(tx *btcutil.Tx, tag Tag) {
 // maybeAddOrphan potentially adds an orphan to the orphan pool.
 //
 // This function MUST be called with the mempool lock held (for writes).
+// maybeAddOrphan可能会为孤立块池添加一个孤立块。
+//
+//必须在保持mempool锁（用于写入）的情况下调用此函数。
 func (mp *TxPool) maybeAddOrphan(tx *btcutil.Tx, tag Tag) error {
 	// Ignore orphan transactions that are too large.  This helps avoid
 	// a memory exhaustion attack based on sending a lot of really large
@@ -369,6 +441,12 @@ func (mp *TxPool) maybeAddOrphan(tx *btcutil.Tx, tag Tag) error {
 // that orphans also spend.
 //
 // This function MUST be called with the mempool lock held (for writes).
+// removeOrphanDoubleSpends删除所有孤立块，
+// 这些孤立块花费来自孤立池的传递事务所花费的输出。
+// 移除那些孤立块，然后导致以递归方式移除所有依赖它们的孤立块。
+// 当事务被添加到主池时，这是必要的，因为它可能花费孤立块也花费的输出。
+//
+//必须在保持mempool锁（用于写入）的情况下调用此函数。
 func (mp *TxPool) removeOrphanDoubleSpends(tx *btcutil.Tx) {
 	msgTx := tx.MsgTx()
 	for _, txIn := range msgTx.TxIn {
@@ -382,6 +460,9 @@ func (mp *TxPool) removeOrphanDoubleSpends(tx *btcutil.Tx) {
 // exists in the main pool.
 //
 // This function MUST be called with the mempool lock held (for reads).
+// isTransactionInPool返回传递的事务是否已存在于主池中。
+//
+//必须在保持mempool锁（用于读取）的情况下调用此函数。
 func (mp *TxPool) isTransactionInPool(hash *chainhash.Hash) bool {
 	if _, exists := mp.pool[*hash]; exists {
 		return true
@@ -394,6 +475,9 @@ func (mp *TxPool) isTransactionInPool(hash *chainhash.Hash) bool {
 // exists in the main pool.
 //
 // This function is safe for concurrent access.
+// IsTransactionInPool返回传递的事务是否已存在于主池中。
+//
+//此函数对于并发访问是安全的。
 func (mp *TxPool) IsTransactionInPool(hash *chainhash.Hash) bool {
 	// Protect concurrent access.
 	mp.mtx.RLock()
@@ -407,6 +491,9 @@ func (mp *TxPool) IsTransactionInPool(hash *chainhash.Hash) bool {
 // in the orphan pool.
 //
 // This function MUST be called with the mempool lock held (for reads).
+// isOrphanInPool返回传递的事务是否已存在于孤立池中。
+//
+//必须在保持mempool锁（用于读取）的情况下调用此函数。
 func (mp *TxPool) isOrphanInPool(hash *chainhash.Hash) bool {
 	if _, exists := mp.orphans[*hash]; exists {
 		return true
@@ -419,6 +506,9 @@ func (mp *TxPool) isOrphanInPool(hash *chainhash.Hash) bool {
 // in the orphan pool.
 //
 // This function is safe for concurrent access.
+// IsOrphanInPool返回传递的事务是否已存在于孤立池中。
+//
+//此函数对于并发访问是安全的。
 func (mp *TxPool) IsOrphanInPool(hash *chainhash.Hash) bool {
 	// Protect concurrent access.
 	mp.mtx.RLock()
@@ -432,6 +522,9 @@ func (mp *TxPool) IsOrphanInPool(hash *chainhash.Hash) bool {
 // in the main pool or in the orphan pool.
 //
 // This function MUST be called with the mempool lock held (for reads).
+// haveTransaction返回传递的事务是否已存在于主池或孤立池中。
+//
+//必须在保持mempool锁（用于读取）的情况下调用此函数。
 func (mp *TxPool) haveTransaction(hash *chainhash.Hash) bool {
 	return mp.isTransactionInPool(hash) || mp.isOrphanInPool(hash)
 }
@@ -440,6 +533,9 @@ func (mp *TxPool) haveTransaction(hash *chainhash.Hash) bool {
 // in the main pool or in the orphan pool.
 //
 // This function is safe for concurrent access.
+// HaveTransaction返回传递的事务是否已存在于主池或孤立池中。
+//
+//此函数对于并发访问是安全的。
 func (mp *TxPool) HaveTransaction(hash *chainhash.Hash) bool {
 	// Protect concurrent access.
 	mp.mtx.RLock()
@@ -453,6 +549,10 @@ func (mp *TxPool) HaveTransaction(hash *chainhash.Hash) bool {
 // RemoveTransaction.  See the comment for RemoveTransaction for more details.
 //
 // This function MUST be called with the mempool lock held (for writes).
+// removeTransaction是实现公共RemoveTransaction的内部函数。
+// 有关详细信息，请参阅RemoveTransaction的注释。
+//
+//必须在保持mempool锁（用于写入）的情况下调用此函数。
 func (mp *TxPool) removeTransaction(tx *btcutil.Tx, removeRedeemers bool) {
 	txHash := tx.Hash()
 	if removeRedeemers {
@@ -488,6 +588,10 @@ func (mp *TxPool) removeTransaction(tx *btcutil.Tx, removeRedeemers bool) {
 // they would otherwise become orphans.
 //
 // This function is safe for concurrent access.
+// RemoveTransaction从mempool中删除传递的事务。 当设置了removeRedeemers标志时，
+// 任何从被删除的事务中兑换输出的事务也将从mempool中递归删除，否则它们将成为孤立块。
+//
+//此函数对于并发访问是安全的。
 func (mp *TxPool) RemoveTransaction(tx *btcutil.Tx, removeRedeemers bool) {
 	// Protect concurrent access.
 	mp.mtx.Lock()

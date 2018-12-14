@@ -1171,6 +1171,8 @@ func (p *Peer) maybeAddDeadline(pendingResponses map[string]time.Time, msgCmd st
 // stallHandler handles stall detection for the peer.  This entails keeping
 // track of expected responses and assigning them deadlines while accounting for
 // the time spent in callbacks.  It must be run as a goroutine.
+// stallHandler处理节点的失速检测。 这需要跟踪预期的响应并指定它们的最后期限，
+// 同时考虑回调所花费的时间。 它必须作为协程运行。
 func (p *Peer) stallHandler() {
 	// These variables are used to adjust the deadline times forward by the
 	// time it takes callbacks to execute.  This is done because new
@@ -1554,6 +1556,11 @@ out:
 // a muxer for various sources of input so we can ensure that server and peer
 // handlers will not block on us sending a message.  That data is then passed on
 // to outHandler to be actually written.
+// queueHandler处理节点的传出数据的排队。 它作为各种输入源的复用器运行，
+// 因此我们可以确保服务器和节点处理程序不会阻止我们发送消息。
+// 然后将该数据传递给outHandler以实际写入。
+
+// 需要发送的报文需由queueHandler处理后发送至其他节点
 func (p *Peer) queueHandler() {
 	pendingMsgs := list.New()
 	invSendQueue := list.New()
@@ -1712,6 +1719,10 @@ func (p *Peer) shouldLogWriteError(err error) bool {
 // outHandler handles all outgoing messages for the peer.  It must be run as a
 // goroutine.  It uses a buffered channel to serialize output messages while
 // allowing the sender to continue running asynchronously.
+// outHandler处理节点的所有传出消息。 它必须作为协程运行。
+// 它使用缓冲通道来序列化输出消息，同时允许发送器以异步方式继续运行。
+
+//发送报文
 func (p *Peer) outHandler() {
 out:
 	for {
@@ -1783,6 +1794,8 @@ cleanup:
 }
 
 // pingHandler periodically pings the peer.  It must be run as a goroutine.
+// pingHandler定期ping节点。 它必须作为协程运行。
+// 心跳检测
 func (p *Peer) pingHandler() {
 	pingTicker := time.NewTicker(pingInterval)
 	defer pingTicker.Stop()
@@ -2098,10 +2111,16 @@ func (p *Peer) start() error {
 
 	// The protocol has been negotiated successfully so start processing input
 	// and output messages.
+	//协议已成功协商，因此开始处理输入和输出消息。
+
 	go p.stallHandler()
+	//接受其他节点发送的报文
 	go p.inHandler()
+	// 需要发送的报文需由queueHandler处理后发送至其他节点
 	go p.queueHandler()
+	//发送报文
 	go p.outHandler()
+	// 心跳检测
 	go p.pingHandler()
 
 	// Send our verack message now that the IO processing machinery has started.
