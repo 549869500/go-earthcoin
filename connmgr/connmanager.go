@@ -16,44 +16,56 @@ import (
 // maxFailedAttempts is the maximum number of successive failed connection
 // attempts after which network failure is assumed and new connections will
 // be delayed by the configured retry duration.
+// maxFailedAttempts是连续失败的连接尝试的最大次数，之后将假定网络故障，
+// 并且新连接将按配置的重试持续时间延迟。
 const maxFailedAttempts = 25
 
 var (
 	//ErrDialNil is used to indicate that Dial cannot be nil in the configuration.
+	// ErrDialNil用于指示Dial在配置中不能为零。
 	ErrDialNil = errors.New("Config: Dial cannot be nil")
 
 	// maxRetryDuration is the max duration of time retrying of a persistent
 	// connection is allowed to grow to.  This is necessary since the retry
 	// logic uses a backoff mechanism which increases the interval base times
 	// the number of retries that have been done.
+	// maxRetryDuration:最大重试持续时间,是允许重试持久连接的最长持续时间。
+	// 这是必要的，因为重试逻辑使用退避机制，该机制将间隔基数乘以已完成的重试次数。
 	maxRetryDuration = time.Minute * 5
 
 	// defaultRetryDuration is the default duration of time for retrying
 	// persistent connections.
+	// defaultRetryDuration:默认重试持续时间,是重试持久连接的默认持续时间。
 	defaultRetryDuration = time.Second * 5
 
 	// defaultTargetOutbound is the default number of outbound connections to
 	// maintain.
+	// defaultTargetOutbound:默认目标出站,是要维护的默认出站连接数。
 	defaultTargetOutbound = uint32(8)
 )
 
 // ConnState represents the state of the requested connection.
+// ConnState表示请求的连接的状态。
 type ConnState uint8
 
 // ConnState can be either pending, established, disconnected or failed.  When
 // a new connection is requested, it is attempted and categorized as
 // established or failed depending on the connection result.  An established
 // connection which was disconnected is categorized as disconnected.
+// ConnState可以是挂起，已建立，已断开连接或已失败。
+// 请求新连接时，会尝试将其分类为已建立或失败，具体取决于连接结果。
+// 已建立的连接断开链接后，被分类为已断开连接。
 const (
-	ConnPending ConnState = iota
-	ConnFailing
+	ConnPending ConnState = iota //挂起
+	ConnFailing                  //已失败
 	ConnCanceled
-	ConnEstablished
-	ConnDisconnected
+	ConnEstablished  //已建立
+	ConnDisconnected //已断开连接
 )
 
 // ConnReq is the connection request to a network address. If permanent, the
 // connection will be retried on disconnection.
+// ConnReq是对网络地址的连接请求。 如果是永久性的，则断开连接时将重试连接。
 type ConnReq struct {
 	// The following variables must only be used atomically.
 	id uint64
@@ -68,6 +80,7 @@ type ConnReq struct {
 }
 
 // updateState updates the state of the connection request.
+// updateState更新连接请求的状态。
 func (c *ConnReq) updateState(state ConnState) {
 	c.stateMtx.Lock()
 	c.state = state
@@ -75,11 +88,13 @@ func (c *ConnReq) updateState(state ConnState) {
 }
 
 // ID returns a unique identifier for the connection request.
+// ID返回连接请求的唯一标识符。
 func (c *ConnReq) ID() uint64 {
 	return atomic.LoadUint64(&c.id)
 }
 
 // State is the connection state of the requested connection.
+// State是请求连接的连接状态。
 func (c *ConnReq) State() ConnState {
 	c.stateMtx.RLock()
 	state := c.state
@@ -88,6 +103,7 @@ func (c *ConnReq) State() ConnState {
 }
 
 // String returns a human-readable string for the connection request.
+// String返回连接请求的可读字符串。
 func (c *ConnReq) String() string {
 	if c.Addr == nil || c.Addr.String() == "" {
 		return fmt.Sprintf("reqid %d", atomic.LoadUint64(&c.id))
@@ -96,6 +112,7 @@ func (c *ConnReq) String() string {
 }
 
 // Config holds the configuration options related to the connection manager.
+// Config保存与连接管理器相关的配置选项。
 // 定义连接管理器
 // 作用：开启监听handleConnected与handleDisconnected服务
 type Config struct {
@@ -109,6 +126,11 @@ type Config struct {
 	// This field will not have any effect if the OnAccept field is not
 	// also specified.  It may be nil if the caller does not wish to listen
 	// for incoming connections.
+	// 监听器定义了一段监听器，连接管理器将为其获取所有权并接受连接。
+	// 接受连接时，将使用连接调用OnAccept处理程序。
+	// 由于连接管理器获取这些侦听器的所有权，因此在连接管理器停止时它们将被关闭。
+	//
+	//如果未指定OnAccept字段，此字段将不起作用。 如果呼叫者不希望收听传入连接，则可能为零。
 	Listeners []net.Listener
 
 	// OnAccept is a callback that is fired when an inbound connection is
@@ -120,29 +142,40 @@ type Config struct {
 	// This field will not have any effect if the Listeners field is not
 	// also specified since there couldn't possibly be any accepted
 	// connections in that case.
+	// OnAccept是接受入站连接时触发的回调。
+	// 呼叫者有责任关闭连接。未能关闭连接将导致连接管理器认为连接仍处于活动状态，
+	// 从而产生不良副作用，例如仍然计入最大连接限制。
+	//
+	// 如果未指定Listeners字段，则此字段不会产生任何影响，因为在这种情况下可能没有任何已接受的连接。
 	OnAccept func(net.Conn)
 
 	// TargetOutbound is the number of outbound network connections to
 	// maintain. Defaults to 8.
+	// TargetOutbound是要维护的出站网络连接数。 默认为8。
 	TargetOutbound uint32
 
 	// RetryDuration is the duration to wait before retrying connection
 	// requests. Defaults to 5s.
+	// RetryDuration是重试连接请求之前等待的持续时间。 默认为5秒。
 	RetryDuration time.Duration
 
 	// OnConnection is a callback that is fired when a new outbound
 	// connection is established.
+	// OnConnection是在建立新的出站连接时触发的回调。
 	OnConnection func(*ConnReq, net.Conn)
 
 	// OnDisconnection is a callback that is fired when an outbound
 	// connection is disconnected.
+	// OnDisconnection是在出站连接断开时触发的回调。
 	OnDisconnection func(*ConnReq)
 
 	// GetNewAddress is a way to get an address to make a network connection
 	// to.  If nil, no new connections will be made automatically.
+	// GetNewAddress是一种获取地址以建立网络连接的方法。 如果为nil，则不会自动建立新连接。
 	GetNewAddress func() (net.Addr, error)
 
 	// Dial connects to the address on the named network. It cannot be nil.
+	//拨号连接到指定网络上的地址。 它不能是零。
 	Dial func(net.Addr) (net.Conn, error)
 }
 
@@ -150,32 +183,39 @@ type Config struct {
 // registering pending connection attempts we allow callers to cancel pending
 // connection attempts before their successful or in the case they're not
 // longer wanted.
+// registerPending:注册待定,用于注册挂起的连接尝试。
+// 通过注册挂起的连接尝试，我们允许呼叫者在成功之前取消挂起的连接尝试，或者在他们不再需要的情况下取消。
 type registerPending struct {
 	c    *ConnReq
 	done chan struct{}
 }
 
 // handleConnected is used to queue a successful connection.
+// handleConnected用于对成功连接进行排队。
 type handleConnected struct {
 	c    *ConnReq
 	conn net.Conn
 }
 
 // handleDisconnected is used to remove a connection.
+// handleDisconnected用于删除连接。
 type handleDisconnected struct {
 	id    uint64
 	retry bool
 }
 
 // handleFailed is used to remove a pending connection.
+// handleFailed用于删除挂起的连接。
 type handleFailed struct {
 	c   *ConnReq
 	err error
 }
 
 // ConnManager provides a manager to handle network connections.
+// ConnManager提供管理器来处理网络连接。
 type ConnManager struct {
 	// The following variables must only be used atomically.
+	//以下变量只能以原子方式使用。
 	connReqCount uint64
 	start        int32
 	stop         int32
@@ -192,6 +232,9 @@ type ConnManager struct {
 // retry duration. Otherwise, if required, it makes a new connection request.
 // After maxFailedConnectionAttempts new connections will be retried after the
 // configured retry duration.
+// handleFailedConn:处理失败连接，处理因断开连接或任何其他故障而失败的连接。
+// 如果是永久性的，则在配置的重试持续时间后重试连接。 否则，如果需要，它会发出新的连接请求。
+// 在maxFailedConnectionAttempts之后，将在配置的重试持续时间后重试新连接。
 func (cm *ConnManager) handleFailedConn(c *ConnReq) {
 	if atomic.LoadInt32(&cm.stop) != 0 {
 		return
@@ -227,6 +270,10 @@ func (cm *ConnManager) handleFailedConn(c *ConnReq) {
 // The connection handler makes sure that we maintain a pool of active outbound
 // connections so that we remain connected to the network.  Connection requests
 // are processed and mapped by their assigned ids.
+// connHandler处理所有与连接相关的请求。 它必须作为协程运行。
+//
+// 连接处理程序确保我们维护一个活动的出站连接池，以便我们保持连接到网络。
+// 连接请求由其分配的ID进行处理和映射。
 func (cm *ConnManager) connHandler() {
 
 	var (
@@ -477,6 +524,9 @@ func (cm *ConnManager) Disconnect(id uint64) {
 //
 // NOTE: This method can also be used to cancel a lingering connection attempt
 // that hasn't yet succeeded.
+// Remove从已知连接中删除与给定连接ID对应的连接。
+//
+// 注意：此方法还可用于取消尚未成功的延迟连接尝试。
 func (cm *ConnManager) Remove(id uint64) {
 	if atomic.LoadInt32(&cm.stop) != 0 {
 		return
@@ -490,6 +540,7 @@ func (cm *ConnManager) Remove(id uint64) {
 
 // listenHandler accepts incoming connections on a given listener.  It must be
 // run as a goroutine.
+// listenHandler接受给定侦听器上的传入连接。 它必须作为协程运行。
 func (cm *ConnManager) listenHandler(listener net.Listener) {
 	log.Infof("Server listening on %s", listener.Addr())
 	for atomic.LoadInt32(&cm.stop) == 0 {
@@ -509,6 +560,7 @@ func (cm *ConnManager) listenHandler(listener net.Listener) {
 }
 
 // Start launches the connection manager and begins connecting to the network.
+//Start启动连接管理器并开始连接到网络。
 func (cm *ConnManager) Start() {
 	// Already started?
 	if atomic.AddInt32(&cm.start, 1) != 1 {
@@ -534,11 +586,13 @@ func (cm *ConnManager) Start() {
 }
 
 // Wait blocks until the connection manager halts gracefully.
+//Wait：阻塞，直到连接管理器正常停止。
 func (cm *ConnManager) Wait() {
 	cm.wg.Wait()
 }
 
 // Stop gracefully shuts down the connection manager.
+//Stop ： 正常地关闭连接管理器。
 func (cm *ConnManager) Stop() {
 	if atomic.AddInt32(&cm.stop, 1) != 1 {
 		log.Warnf("Connection manager already stopped")
@@ -559,6 +613,8 @@ func (cm *ConnManager) Stop() {
 
 // New returns a new connection manager.
 // Use Start to start connecting to the network.
+// New返回一个新的连接管理器。
+// 使用“Start”开始连接到网络。
 func New(cfg *Config) (*ConnManager, error) {
 	if cfg.Dial == nil {
 		return nil, ErrDialNil

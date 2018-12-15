@@ -60,6 +60,7 @@ type serializedKnownAddress struct {
 	LastAttempt int64 // 最后一次连接时间
 	LastSuccess int64 // 最后一次成功连接时间
 	// no refcount or tried, that is available from context.
+	//没有引用或尝试，可以从上下文中获得。
 }
 
 type serializedAddrManager struct {
@@ -77,85 +78,108 @@ type localAddress struct {
 
 // AddressPriority type is used to describe the hierarchy of local address
 // discovery methods.
+// AddressPriority:地址优先级
+// AddressPriority类型用于描述本地地址发现方法的层次结构。
 type AddressPriority int
 
 const (
 	// InterfacePrio signifies the address is on a local interface
+	// InterfacePrio：接口优先级，表示地址在本地接口上
 	InterfacePrio AddressPriority = iota
 
 	// BoundPrio signifies the address has been explicitly bounded to.
+	// BoundPrio:绑定优先级，表示地址已明确限制。
 	BoundPrio
 
 	// UpnpPrio signifies the address was obtained from UPnP.
+	// UpnpPrio：Upnp优先级，表示该地址是从UPnP获得的。
 	UpnpPrio
 
 	// HTTPPrio signifies the address was obtained from an external HTTP service.
+	// HTTPPrio：HTTP优先级，表示该地址是从外部HTTP服务获取的。
 	HTTPPrio
 
 	// ManualPrio signifies the address was provided by --externalip.
+	// ManualPrio：Manual优先级，表示地址由--externalip提供。
 	ManualPrio
 )
 
 const (
 	// needAddressThreshold is the number of addresses under which the
 	// address manager will claim to need more addresses.
+	// needAddressThreshold：需要地址阈值，是地址管理器声称需要更多地址的地址数。
 	needAddressThreshold = 1000
 
 	// dumpAddressInterval is the interval used to dump the address
 	// cache to disk for future use.
+	// dumpAddressInterval：转储地址间隔，是用于将地址缓存转储到磁盘以供将来使用的时间间隔。
 	dumpAddressInterval = time.Minute * 10
 
 	// triedBucketSize is the maximum number of addresses in each
 	// tried address bucket.
+	// triesBucketSize：尝试地址存储桶最大值，是每个尝试过的地址存储桶中的最大地址数。
 	triedBucketSize = 256
 
 	// triedBucketCount is the number of buckets we split tried
 	// addresses over.
+	// triesBucketCount：尝试地址存储桶统计，是我们拆分尝试地址的存储桶数量。
 	triedBucketCount = 64
 
 	// newBucketSize is the maximum number of addresses in each new address
 	// bucket.
+	// newBucketSize是每个新地址存储桶中的最大地址数。
 	newBucketSize = 64
 
 	// newBucketCount is the number of buckets that we spread new addresses
 	// over.
+	// newBucketCount是我们传播新地址的存储桶数量。
 	newBucketCount = 1024
 
 	// triedBucketsPerGroup is the number of tried buckets over which an
 	// address group will be spread.
+	// triesBucketsPerGroup是一个地址组将在其上传播的已尝试存储桶的数量。
 	triedBucketsPerGroup = 8
 
 	// newBucketsPerGroup is the number of new buckets over which an
 	// source address group will be spread.
+	// newBucketsPerGroup是源地址组将在其上传播的新存储桶的数量。
 	newBucketsPerGroup = 64
 
 	// newBucketsPerAddress is the number of buckets a frequently seen new
 	// address may end up in.
+	// newBucketsPerAddress是经常看到的新地址最终可能出现的存储桶数量。
 	newBucketsPerAddress = 8
 
 	// numMissingDays is the number of days before which we assume an
 	// address has vanished if we have not seen it announced  in that long.
+	// numMissingDays是我们假设地址已经消失的天数，如果我们在那么长时间内没有看到它被声明的话。
 	numMissingDays = 30
 
 	// numRetries is the number of tried without a single success before
 	// we assume an address is bad.
+	// numRetries是在我们假设地址无效之前尝试过没有一次成功的次数。
 	numRetries = 3
 
 	// maxFailures is the maximum number of failures we will accept without
 	// a success before considering an address bad.
+	// maxFailures是在考虑地址无效之前我们将接受但未成功的最大失败次数。
 	maxFailures = 10
 
 	// minBadDays is the number of days since the last success before we
 	// will consider evicting an address.
+	// minBadDays是我们考虑驱逐地址之前自上次成功以来的天数。
 	minBadDays = 7
 
 	// getAddrMax is the most addresses that we will send in response
 	// to a getAddr (in practise the most addresses we will return from a
 	// call to AddressCache()).
+	// getAddrMax是我们将响应getAddr发送的最多地址
+	// （实际上我们将通过调用AddressCache（）返回大多数地址）。
 	getAddrMax = 2500
 
 	// getAddrPercent is the percentage of total addresses known that we
 	// will share with a call to AddressCache.
+	// getAddrPercent是我们将通过调用AddressCache分享的已知总地址的百分比。
 	getAddrPercent = 23
 
 	// serialisationVersion is the current version of the on-disk format.
@@ -164,6 +188,7 @@ const (
 
 // updateAddress is a helper function to either update an address already known
 // to the address manager, or to add the address if not already known.
+// updateAddress是一个帮助函数，用于更新地址管理器已知的地址，或添加地址（如果尚未知道）。
 func (a *AddrManager) updateAddress(netAddr, srcAddr *wire.NetAddress) {
 	// Filter out non-routable addresses. Note that non-routable
 	// also includes invalid and local addresses.
@@ -240,12 +265,18 @@ func (a *AddrManager) updateAddress(netAddr, srcAddr *wire.NetAddress) {
 
 // expireNew makes space in the new buckets by expiring the really bad entries.
 // If no bad entries are available we look at a few and remove the oldest.
+//
+// expireNew:到期新建 , expireNew通过使真正错误的条目到期来在新桶中创建空间。
+// 如果没有可用的错误条目，我们会查看几个并删除最旧的条目。
 func (a *AddrManager) expireNew(bucket int) {
 	// First see if there are any entries that are so bad we can just throw
 	// them away. otherwise we throw away the oldest entry in the cache.
 	// Bitcoind here chooses four random and just throws the oldest of
 	// those away, but we keep track of oldest in the initial traversal and
 	// use that information instead.
+	// 首先看看是否有任何条目如此糟糕我们可以扔掉它们。 否则我们会丢弃缓存中最旧的条目。
+	// Bitcoind在这里选择四个随机并且只抛出最老的那些，
+	// 但是我们在初始遍历中跟踪最旧的并且使用该信息。
 	var oldest *KnownAddress
 	for k, v := range a.addrNew[bucket] {
 		if v.isBad() {
@@ -281,6 +312,9 @@ func (a *AddrManager) expireNew(bucket int) {
 // pickTried selects an address from the tried bucket to be evicted.
 // We just choose the eldest. Bitcoind selects 4 random entries and throws away
 // the older of them.
+// pickTried从被尝试的存储桶中选择一个地址进行驱逐。
+// 我们只选择最年长的 Bitcoind选择4个随机条目并丢弃它们中较旧的条目。
+// bitcoind：是比特币运行的核心程序俗称bitcoin core
 func (a *AddrManager) pickTried(bucket int) *list.Element {
 	var oldest *KnownAddress
 	var oldestElem *list.Element
@@ -295,8 +329,9 @@ func (a *AddrManager) pickTried(bucket int) *list.Element {
 	return oldestElem
 }
 
+//getNewBucket：获取新的存储桶
 func (a *AddrManager) getNewBucket(netAddr, srcAddr *wire.NetAddress) int {
-	// bitcoind:
+	// bitcoind:是比特币运行的核心程序俗称bitcoin core
 	// doublesha256(key + sourcegroup + int64(doublesha256(key + group + sourcegroup))%bucket_per_source_group) % num_new_buckets
 
 	data1 := []byte{}
@@ -317,6 +352,7 @@ func (a *AddrManager) getNewBucket(netAddr, srcAddr *wire.NetAddress) int {
 	return int(binary.LittleEndian.Uint64(hash2) % newBucketCount)
 }
 
+//getTriedBucket：获取尝试链接的地址存储桶
 func (a *AddrManager) getTriedBucket(netAddr *wire.NetAddress) int {
 	// bitcoind hashes this as:
 	// doublesha256(key + group + truncate_to_64bits(doublesha256(key)) % buckets_per_group) % num_buckets
@@ -339,6 +375,7 @@ func (a *AddrManager) getTriedBucket(netAddr *wire.NetAddress) int {
 
 // addressHandler is the main handler for the address manager.  It must be run
 // as a goroutine.
+// addressHandler是地址管理器的主要处理程序。 它必须作为协程运行。
 func (a *AddrManager) addressHandler() {
 	dumpAddressTicker := time.NewTicker(dumpAddressInterval)
 	defer dumpAddressTicker.Stop()
@@ -359,6 +396,7 @@ out:
 
 // savePeers saves all the known addresses to a file so they can be read back
 // in at next run.
+// savePeers将所有已知地址保存到文件中，以便在下次运行时可以回读它们。
 func (a *AddrManager) savePeers() {
 	a.mtx.Lock()
 	defer a.mtx.Unlock()
@@ -417,6 +455,8 @@ func (a *AddrManager) savePeers() {
 
 // loadPeers loads the known address from the saved file.  If empty, missing, or
 // malformed file, just don't load anything and start fresh
+// loadPeers从保存的文件中加载已知地址。 如果文件为空，丢失或格式错误，
+// 就不加载任何内容并重新开始
 func (a *AddrManager) loadPeers() {
 	a.mtx.Lock()
 	defer a.mtx.Unlock()
@@ -436,6 +476,7 @@ func (a *AddrManager) loadPeers() {
 	log.Infof("Loaded %d addresses from file '%s'", a.numAddresses(), a.peersFile)
 }
 
+//deserializePeers：反序列化节点，解析节点
 func (a *AddrManager) deserializePeers(filePath string) error {
 
 	_, err := os.Stat(filePath)
@@ -525,6 +566,7 @@ func (a *AddrManager) deserializePeers(filePath string) error {
 }
 
 // DeserializeNetAddress converts a given address string to a *wire.NetAddress
+// DeserializeNetAddress：反序列化网址，将给定的地址字符串转换为* wire.NetAddress
 func (a *AddrManager) DeserializeNetAddress(addr string) (*wire.NetAddress, error) {
 	host, portStr, err := net.SplitHostPort(addr)
 	if err != nil {
@@ -540,6 +582,7 @@ func (a *AddrManager) DeserializeNetAddress(addr string) (*wire.NetAddress, erro
 
 // Start begins the core address handler which manages a pool of known
 // addresses, timeouts, and interval based writes.
+// Start开始核心地址处理程序，该处理程序管理已知地址，超时和基于间隔的写入池。
 func (a *AddrManager) Start() {
 	// Already started?
 	if atomic.AddInt32(&a.started, 1) != 1 {
@@ -557,6 +600,7 @@ func (a *AddrManager) Start() {
 }
 
 // Stop gracefully shuts down the address manager by stopping the main handler.
+//通过停止主处理程序优雅地停止地址管理器。
 func (a *AddrManager) Stop() error {
 	if atomic.AddInt32(&a.shutdown, 1) != 1 {
 		log.Warnf("Address manager is already in the process of " +
@@ -602,6 +646,7 @@ func (a *AddrManager) AddAddress(addr, srcAddr *wire.NetAddress) {
 
 // AddAddressByIP adds an address where we are given an ip:port and not a
 // wire.NetAddress.
+// AddAddressByIP添加一个地址，给出一个ip：port而不是一个wire.NetAddress。
 func (a *AddrManager) AddAddressByIP(addrIP string) error {
 	// Split IP and port
 	addr, portStr, err := net.SplitHostPort(addrIP)
@@ -623,11 +668,13 @@ func (a *AddrManager) AddAddressByIP(addrIP string) error {
 }
 
 // NumAddresses returns the number of addresses known to the address manager.
+// NumAddresses返回地址管理器已知的地址数。
 func (a *AddrManager) numAddresses() int {
 	return a.nTried + a.nNew
 }
 
 // NumAddresses returns the number of addresses known to the address manager.
+// NumAddresses返回地址管理器已知的地址数。
 func (a *AddrManager) NumAddresses() int {
 	a.mtx.Lock()
 	defer a.mtx.Unlock()
@@ -637,6 +684,7 @@ func (a *AddrManager) NumAddresses() int {
 
 // NeedMoreAddresses returns whether or not the address manager needs more
 // addresses.
+// NeedMoreAddresses返回地址管理器是否需要更多地址。
 func (a *AddrManager) NeedMoreAddresses() bool {
 	a.mtx.Lock()
 	defer a.mtx.Unlock()
@@ -646,6 +694,7 @@ func (a *AddrManager) NeedMoreAddresses() bool {
 
 // AddressCache returns the current address cache.  It must be treated as
 // read-only (but since it is a copy now, this is not as dangerous).
+// AddressCache返回当前地址缓存。 它必须被视为只读（但由于它现在是一个副本，这不是那么危险）。
 func (a *AddrManager) AddressCache() []*wire.NetAddress {
 	a.mtx.Lock()
 	defer a.mtx.Unlock()
@@ -680,6 +729,7 @@ func (a *AddrManager) AddressCache() []*wire.NetAddress {
 
 // reset resets the address manager by reinitialising the random source
 // and allocating fresh empty bucket storage.
+// reset通过重新初始化随机源并分配新的空存储桶来重置地址管理器。
 func (a *AddrManager) reset() {
 
 	a.addrIndex = make(map[string]*KnownAddress)
@@ -697,6 +747,8 @@ func (a *AddrManager) reset() {
 // HostToNetAddress returns a netaddress given a host address.  If the address
 // is a Tor .onion address this will be taken care of.  Else if the host is
 // not an IP address it will be resolved (via Tor if required).
+// HostToNetAddress返回给定主机地址的netaddress。 如果地址是Tor .onion地址，那么这将被处理。
+// 否则，如果主机不是IP地址，则将解析（如果需要，通过Tor）。
 func (a *AddrManager) HostToNetAddress(host string, port uint16, services wire.ServiceFlag) (*wire.NetAddress, error) {
 	// Tor address is 16 char base32 + ".onion"
 	var ip net.IP
@@ -728,6 +780,8 @@ func (a *AddrManager) HostToNetAddress(host string, port uint16, services wire.S
 // ipString returns a string for the ip from the provided NetAddress. If the
 // ip is in the range used for Tor addresses then it will be transformed into
 // the relevant .onion address.
+// ipString从提供的NetAddress返回ip的字符串。 如果ip在用于Tor地址的范围内，
+// 则它将被转换为相关的.onion地址。
 func ipString(na *wire.NetAddress) string {
 	if IsOnionCatTor(na) {
 		// We know now that na.IP is long enough.
@@ -740,6 +794,7 @@ func ipString(na *wire.NetAddress) string {
 
 // NetAddressKey returns a string key in the form of ip:port for IPv4 addresses
 // or [ip]:port for IPv6 addresses.
+// NetAddressKey以ip：port的形式返回IPv4地址的字符串密钥，或[ip]：IPv6地址的端口。
 func NetAddressKey(na *wire.NetAddress) string {
 	port := strconv.FormatUint(uint64(na.Port), 10)
 
@@ -827,6 +882,7 @@ func (a *AddrManager) find(addr *wire.NetAddress) *KnownAddress {
 
 // Attempt increases the given address' attempt counter and updates
 // the last attempt time.
+// Attempt增加给定地址的尝试计数器并更新上次尝试时间
 func (a *AddrManager) Attempt(addr *wire.NetAddress) {
 	a.mtx.Lock()
 	defer a.mtx.Unlock()
@@ -964,6 +1020,7 @@ func (a *AddrManager) Good(addr *wire.NetAddress) {
 }
 
 // SetServices sets the services for the giiven address to the provided value.
+// SetServices将giiven地址的服务设置为提供的值。
 func (a *AddrManager) SetServices(addr *wire.NetAddress, services wire.ServiceFlag) {
 	a.mtx.Lock()
 	defer a.mtx.Unlock()
@@ -984,6 +1041,7 @@ func (a *AddrManager) SetServices(addr *wire.NetAddress, services wire.ServiceFl
 
 // AddLocalAddress adds na to the list of known local addresses to advertise
 // with the given priority.
+// AddLocalAddress将网络地址添加到已知本地地址列表中以使用给定优先级进行通告。
 func (a *AddrManager) AddLocalAddress(na *wire.NetAddress, priority AddressPriority) error {
 	if !IsRoutable(na) {
 		return fmt.Errorf("address %s is not routable", na.IP)
@@ -1009,6 +1067,7 @@ func (a *AddrManager) AddLocalAddress(na *wire.NetAddress, priority AddressPrior
 
 // getReachabilityFrom returns the relative reachability of the provided local
 // address to the provided remote address.
+// getReachabilityFrom返回提供的本地地址与提供的远程地址的相对可达性。
 func getReachabilityFrom(localAddr, remoteAddr *wire.NetAddress) int {
 	const (
 		Unreachable = 0
@@ -1088,6 +1147,7 @@ func getReachabilityFrom(localAddr, remoteAddr *wire.NetAddress) int {
 
 // GetBestLocalAddress returns the most appropriate local address to use
 // for the given remote address.
+// GetBestLocalAddress返回用于给定远程地址的最合适的本地地址。
 func (a *AddrManager) GetBestLocalAddress(remoteAddr *wire.NetAddress) *wire.NetAddress {
 	a.lamtx.Lock()
 	defer a.lamtx.Unlock()
@@ -1127,6 +1187,8 @@ func (a *AddrManager) GetBestLocalAddress(remoteAddr *wire.NetAddress) *wire.Net
 
 // New returns a new bitcoin address manager.
 // Use Start to begin processing asynchronous address updates.
+// New返回一个新的比特币地址管理器。
+// 使用“Start”开始处理异步地址更新。
 func New(dataDir string, lookupFunc func(string) ([]net.IP, error)) *AddrManager {
 	am := AddrManager{
 		peersFile:      filepath.Join(dataDir, "peers.json"),

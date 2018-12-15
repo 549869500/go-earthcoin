@@ -28,7 +28,7 @@ const (
 	// priority / low-fee transactions.  It is used to help determine which
 	// are allowed into the mempool and consequently affects their relay and
 	// inclusion when generating block templates.
-	// DefaultBlockPrioritySize是高优先级/低费用事务的默认大小（以字节为单位）。
+	// DefaultBlockPrioritySize是高优先级/低费用交易的默认大小（以字节为单位）。
 	// 它用于帮助确定哪些允许进入mempool，从而在生成块模板时影响它们的继电器和包含。
 	DefaultBlockPrioritySize = 50000
 
@@ -39,7 +39,7 @@ const (
 
 	// orphanExpireScanInterval is the minimum amount of time in between
 	// scans of the orphan pool to evict expired transactions.
-	// orphanTTL是孤立块池在到期之前被允许留在孤立池中的最长时间，
+	// orphanTTL是孤立交易池在到期之前被允许留在孤立池中的最长时间，
 	// 并且在下一次扫描期间被驱逐。
 	orphanExpireScanInterval = time.Minute * 5
 )
@@ -47,8 +47,8 @@ const (
 // Tag represents an identifier to use for tagging orphan transactions.  The
 // caller may choose any scheme it desires, however it is common to use peer IDs
 // so that orphans can be identified by which peer first relayed them.
-// Tag表示用于标记孤立事务的标识符。 呼叫者可以选择它想要的任何方案，但是通常使用节点ID，
-// 以便可以通过哪个节点首先中继它们来识别孤立块。
+// Tag表示用于标记孤立交易的标识符。 呼叫者可以选择它想要的任何方案，但是通常使用节点ID，
+// 以便可以通过哪个节点首先中继它们来识别孤立交易。
 type Tag uint64
 
 // Config is a descriptor containing the memory pool configuration.
@@ -66,7 +66,7 @@ type Config struct {
 
 	// FetchUtxoView defines the function to use to fetch unspent
 	// transaction output information.
-	// FetchUtxoView定义用于获取未使用的事务输出信息的函数。
+	// FetchUtxoView定义用于获取未使用的交易输出信息的函数。
 	FetchUtxoView func(*btcutil.Tx) (*blockchain.UtxoViewpoint, error)
 
 	// BestHeight defines the function to use to access the block height of
@@ -84,7 +84,7 @@ type Config struct {
 	// CalcSequenceLock defines the function to use in order to generate
 	// the current sequence lock for the given transaction using the passed
 	// utxo view.
-	// CalcSequenceLock定义要使用的函数，以便使用传递的utxo视图为给定的事务生成当前
+	// CalcSequenceLock定义要使用的函数，以便使用传递的utxo视图为给定的交易生成当前
 	// 序列锁。
 	CalcSequenceLock func(*btcutil.Tx, *blockchain.UtxoViewpoint) (*blockchain.SequenceLock, error)
 
@@ -93,7 +93,7 @@ type Config struct {
 	// if transactions using new to be soft-forked rules should be allowed
 	// into the mempool or not.
 	//如果目标deploymentID处于活动状态，则IsDeploymentActive返回true，否则返回false。
-	//mempool使用此函数来判断是否应允许使用new作为软分叉规则的事务进入mempool。
+	//mempool使用此函数来判断是否应允许使用new作为软分叉规则的交易进入mempool。
 	IsDeploymentActive func(deploymentID uint32) (bool, error)
 
 	// SigCache defines a signature cache to use.
@@ -101,20 +101,20 @@ type Config struct {
 	SigCache *txscript.SigCache
 
 	// HashCache defines the transaction hash mid-state cache to use.
-	// HashCache定义要使用的事务哈希中间状态缓存。
+	// HashCache定义要使用的交易哈希中间状态缓存。
 	HashCache *txscript.HashCache
 
 	// AddrIndex defines the optional address index instance to use for
 	// indexing the unconfirmed transactions in the memory pool.
 	// This can be nil if the address index is not enabled.
-	// AddrIndex定义可选的地址索引实例，用于索引内存池中未确认的事务。
+	// AddrIndex定义可选的地址索引实例，用于索引内存池中未确认的交易。
 	//如果未启用地址索引，则此值可以为nil。
 	AddrIndex *indexers.AddrIndex
 
 	// FeeEstimatator provides a feeEstimator. If it is not nil, the mempool
 	// records all new transactions it observes into the feeEstimator.
 	// FeeEstimatator提供费用估算器。
-	// 如果它不是零，则mempool将它观察到的所有新事务记录到feeEstimator中。
+	// 如果它不是零，则mempool将它观察到的所有新交易记录到feeEstimator中。
 	FeeEstimator *FeeEstimator
 }
 
@@ -125,7 +125,7 @@ type Policy struct {
 	// MaxTxVersion is the transaction version that the mempool should
 	// accept.  All transactions above this version are rejected as
 	// non-standard.
-	// MaxTxVersion是mempool应该接受的事务版本。
+	// MaxTxVersion是mempool应该接受的交易版本。
 	// 此版本以上的所有交易均被拒绝为非标准交易。
 	MaxTxVersion int32
 
@@ -137,8 +137,8 @@ type Policy struct {
 	// AcceptNonStd defines whether to accept non-standard transactions. If
 	// true, non-standard transactions will be accepted into the mempool.
 	// Otherwise, all non-standard transactions will be rejected.
-	// AcceptNonStd定义是否接受非标准事务。
-	// 如果为true，则非标准事务将被接受到mempool中。
+	// AcceptNonStd定义是否接受非标准交易。
+	// 如果为true，则非标准交易将被接受到mempool中。
 	// 否则，所有非标准交易都将被拒绝。
 	AcceptNonStd bool
 
@@ -149,20 +149,20 @@ type Policy struct {
 
 	// MaxOrphanTxs is the maximum number of orphan transactions
 	// that can be queued.
-	// MaxOrphanTxs是可以排队的最大孤立事务数。
+	// MaxOrphanTxs是可以排队的最大孤立交易数。
 	MaxOrphanTxs int
 
 	// MaxOrphanTxSize is the maximum size allowed for orphan transactions.
 	// This helps prevent memory exhaustion attacks from sending a lot of
 	// of big orphans.
-	// MaxOrphanTxSize是孤立事务允许的最大大小。
-	//这有助于防止内存耗尽攻击发送大量孤立块。
+	// MaxOrphanTxSize是孤立交易允许的最大大小。
+	//这有助于防止内存耗尽攻击发送大量孤立交易。
 	MaxOrphanTxSize int
 
 	// MaxSigOpCostPerTx is the cumulative maximum cost of all the signature
 	// operations in a single transaction we will relay or mine.  It is a
 	// fraction of the max signature operations for a block.
-	// MaxSigOpCostPerTx是我们将中继或挖掘的单个事务中所有签名操作的累积最大成本。
+	// MaxSigOpCostPerTx是我们将中继或挖掘的单个交易中所有签名操作的累积最大成本。
 	// 它是块的最大签名操作的一部分。
 	MaxSigOpCostPerTx int
 
@@ -174,21 +174,21 @@ type Policy struct {
 
 // TxDesc is a descriptor containing a transaction in the mempool along with
 // additional metadata.
-// TxDesc是一个描述符，包含mempool中的事务以及其他元数据。
+// TxDesc是一个描述符，包含mempool中的交易以及其他元数据。
 type TxDesc struct {
 	mining.TxDesc
 
 	// StartingPriority is the priority of the transaction when it was added
 	// to the pool.
-	// StartingPriority是将事务添加到池中时的优先级。
+	// StartingPriority是将交易添加到池中时的优先级。
 	StartingPriority float64
 }
 
 // orphanTx is normal transaction that references an ancestor transaction
 // that is not yet available.  It also contains additional information related
 // to it such as an expiration time to help prevent caching the orphan forever.
-// orphanTx是引用尚不可用的祖先事务的普通事务。
-// 它还包含与其相关的其他信息，例如过期时间，以帮助防止永久缓存孤立块。
+// orphanTx是引用尚不可用的祖先交易的普通交易。
+// 它还包含与其相关的其他信息，例如过期时间，以帮助防止永久缓存孤立交易。
 type orphanTx struct {
 	tx         *btcutil.Tx
 	tag        Tag
@@ -199,7 +199,7 @@ type orphanTx struct {
 // and relayed to other peers.  It is safe for concurrent access from multiple
 // peers.
 // 定义交易池结构, 交易池TxPool是用来管理所有接收到的交易Tx。
-// 交易池用作需要挖掘成块并转发给其他节点的事务源。 来自多个节点的并发访问是安全的。
+// 交易池用作需要挖掘成块并转发给其他节点的交易源。 来自多个节点的并发访问是安全的。
 type TxPool struct {
 	// The following variables must only be used atomically.
 	//以下变量只能以原子方式使用。
@@ -221,8 +221,8 @@ type TxPool struct {
 	// scanned in order to evict orphans.  This is NOT a hard deadline as
 	// the scan will only run when an orphan is added to the pool as opposed
 	// to on an unconditional timer.
-	//nextExpireScan是对孤立块池进行扫描以驱逐孤立块的时间。这不是一个严格的最后期限，
-	//因为只有当孤立块被添加到池中时，扫描才会运行，而不是在无条件计时器上。
+	//nextExpireScan是对孤立交易池进行扫描以驱逐孤立交易的时间。这不是一个严格的最后期限，
+	//因为只有当孤立交易被添加到池中时，扫描才会运行，而不是在无条件计时器上。
 	nextExpireScan time.Time
 }
 
@@ -230,16 +230,37 @@ type TxPool struct {
 //确保TxPool类型实现了mining.TxSource接口。
 var _ mining.TxSource = (*TxPool)(nil)
 
+// 下面是交易的结构，位置在/github.com/btcsuite/btcutil/tx.go
+// // Tx defines a bitcoin transaction that provides easier and more efficient
+// // manipulation of raw transactions.  It also memoizes the hash for the
+// // transaction on its first access so subsequent accesses don't have to repeat
+// // the relatively expensive hashing operations.
+// // Tx定义了一个比特币交易，可以更简单，更有效地处理原始交易。
+// // 它还在第一次访问时记忆交易的哈希值，因此后续访问不必重复相对昂贵的哈希操作。
+// type Tx struct {
+// // MsgTx的基础
+// 	msgTx         *wire.MsgTx     // Underlying MsgTx
+// //缓存交易哈希
+// 	txHash        *chainhash.Hash // Cached transaction hash
+// 	// 缓存交易见证哈希
+// 	txHashWitness *chainhash.Hash // Cached transaction witness hash
+// 	//如果交易有见证数据
+// 	txHasWitness  *bool           // If the transaction has witness data
+//  //块内的位置或交易索引未知
+// 	txIndex       int             // Position within a block or TxIndexUnknown
+// }
+
 // removeOrphan is the internal function which implements the public
 // RemoveOrphan.  See the comment for RemoveOrphan for more details.
 //
+// RemoveOrphan:删除孤立交易
 // removeOrphan是实现公共RemoveOrphan的内部函数。
 // 有关详细信息，请参阅RemoveOrphan的注释。
 //
 //必须在保持mempool锁（用于写入）的情况下调用此函数。
 func (mp *TxPool) removeOrphan(tx *btcutil.Tx, removeRedeemers bool) {
 	// Nothing to do if passed tx is not an orphan.
-	//如果传递tx没有什么可以做的不是孤立块。
+	//如果传递tx没有什么可以做的不是孤立交易。
 	txHash := tx.Hash()
 	otx, exists := mp.orphans[*txHash]
 	if !exists {
@@ -255,7 +276,7 @@ func (mp *TxPool) removeOrphan(tx *btcutil.Tx, removeRedeemers bool) {
 
 			// Remove the map entry altogether if there are no
 			// longer any orphans which depend on it.
-			//如果不再有依赖它的孤立块，则完全删除地图条目。
+			//如果不再有依赖它的孤立交易，则完全删除地图条目。
 			if len(orphans) == 0 {
 				delete(mp.orphansByPrev, txIn.PreviousOutPoint)
 			}
@@ -263,7 +284,7 @@ func (mp *TxPool) removeOrphan(tx *btcutil.Tx, removeRedeemers bool) {
 	}
 
 	// Remove any orphans that redeem outputs from this one if requested.
-	//如果请求，删除任何从此一个兑换输出的孤立块。
+	//如果请求，删除任何从此一个兑换输出的孤立交易。
 	if removeRedeemers {
 		prevOut := wire.OutPoint{Hash: *txHash}
 		for txOutIdx := range tx.MsgTx().TxOut {
@@ -275,7 +296,7 @@ func (mp *TxPool) removeOrphan(tx *btcutil.Tx, removeRedeemers bool) {
 	}
 
 	// Remove the transaction from the orphan pool.
-	//从孤立池中删除事务。
+	//从孤立池中删除交易。
 	delete(mp.orphans, *txHash)
 }
 
@@ -283,7 +304,8 @@ func (mp *TxPool) removeOrphan(tx *btcutil.Tx, removeRedeemers bool) {
 // previous orphan index.
 //
 // This function is safe for concurrent access.
-// RemoveOrphan从孤立池和先前的孤立索引中删除传递的孤立事务。
+// RemoveOrphan:删除孤立交易
+// RemoveOrphan从孤立池和先前的孤立索引中删除传递的孤立交易。
 //
 //此函数对于并发访问是安全的。
 func (mp *TxPool) RemoveOrphan(tx *btcutil.Tx) {
@@ -296,7 +318,7 @@ func (mp *TxPool) RemoveOrphan(tx *btcutil.Tx) {
 // identifier.
 //
 // This function is safe for concurrent access.
-// RemoveOrphansByTag删除所有使用提供的标识符标记的孤立事务。
+// RemoveOrphansByTag删除所有使用提供的标识符标记的孤立交易。
 //
 //此函数对于并发访问是安全的。
 func (mp *TxPool) RemoveOrphansByTag(tag Tag) uint64 {
@@ -316,8 +338,9 @@ func (mp *TxPool) RemoveOrphansByTag(tag Tag) uint64 {
 // orphan if adding a new one would cause it to overflow the max allowed.
 //
 // This function MUST be called with the mempool lock held (for writes).
-// limitNumOrphans通过驱逐随机孤立来限制孤立事务的数量，
-// 如果添加新的孤立将导致它溢出允许的最大值。
+// 限制孤立交易的数量
+// limitNumOrphans通过驱逐随机孤立来限制孤立交易的数量，
+// 如果添加新的孤立交易将导致它溢出允许的最大值。
 //
 //必须在保持mempool锁（用于写入）的情况下调用此函数。
 func (mp *TxPool) limitNumOrphans() error {
@@ -372,7 +395,8 @@ func (mp *TxPool) limitNumOrphans() error {
 // addOrphan adds an orphan transaction to the orphan pool.
 //
 // This function MUST be called with the mempool lock held (for writes).
-// addOrphan将一个孤立事务添加到孤立池中。
+// addOrphan:添加孤立交易
+// addOrphan将一个孤立交易添加到孤立池中。
 //
 //必须在保持mempool锁（用于写入）的情况下调用此函数。
 func (mp *TxPool) addOrphan(tx *btcutil.Tx, tag Tag) {
@@ -406,7 +430,8 @@ func (mp *TxPool) addOrphan(tx *btcutil.Tx, tag Tag) {
 // maybeAddOrphan potentially adds an orphan to the orphan pool.
 //
 // This function MUST be called with the mempool lock held (for writes).
-// maybeAddOrphan可能会为孤立块池添加一个孤立块。
+// maybeAddOrphan:或许能添加孤立交易
+// maybeAddOrphan可能会为孤立交易池添加一个孤立交易。
 //
 //必须在保持mempool锁（用于写入）的情况下调用此函数。
 func (mp *TxPool) maybeAddOrphan(tx *btcutil.Tx, tag Tag) error {
@@ -441,10 +466,11 @@ func (mp *TxPool) maybeAddOrphan(tx *btcutil.Tx, tag Tag) error {
 // that orphans also spend.
 //
 // This function MUST be called with the mempool lock held (for writes).
-// removeOrphanDoubleSpends删除所有孤立块，
-// 这些孤立块花费来自孤立池的传递事务所花费的输出。
-// 移除那些孤立块，然后导致以递归方式移除所有依赖它们的孤立块。
-// 当事务被添加到主池时，这是必要的，因为它可能花费孤立块也花费的输出。
+// removeOrphanDoubleSpends：删除孤立交易双倍花费
+// removeOrphanDoubleSpends删除所有孤立交易，
+// 这些孤立交易花费来自孤立池的传递交易所花费的输出。
+// 移除那些孤立交易，然后导致以递归方式移除所有依赖它们的孤立交易。
+// 当交易被添加到主池时，这是必要的，因为它可能花费孤立交易也花费的输出。
 //
 //必须在保持mempool锁（用于写入）的情况下调用此函数。
 func (mp *TxPool) removeOrphanDoubleSpends(tx *btcutil.Tx) {
@@ -460,7 +486,8 @@ func (mp *TxPool) removeOrphanDoubleSpends(tx *btcutil.Tx) {
 // exists in the main pool.
 //
 // This function MUST be called with the mempool lock held (for reads).
-// isTransactionInPool返回传递的事务是否已存在于主池中。
+// isTransactionInPool:是交易池中的交易
+// isTransactionInPool返回传递的交易是否已存在于主池中。
 //
 //必须在保持mempool锁（用于读取）的情况下调用此函数。
 func (mp *TxPool) isTransactionInPool(hash *chainhash.Hash) bool {
@@ -475,7 +502,8 @@ func (mp *TxPool) isTransactionInPool(hash *chainhash.Hash) bool {
 // exists in the main pool.
 //
 // This function is safe for concurrent access.
-// IsTransactionInPool返回传递的事务是否已存在于主池中。
+// isTransactionInPool:是交易池中的交易
+// IsTransactionInPool返回传递的交易是否已存在于主池中。
 //
 //此函数对于并发访问是安全的。
 func (mp *TxPool) IsTransactionInPool(hash *chainhash.Hash) bool {
@@ -491,7 +519,8 @@ func (mp *TxPool) IsTransactionInPool(hash *chainhash.Hash) bool {
 // in the orphan pool.
 //
 // This function MUST be called with the mempool lock held (for reads).
-// isOrphanInPool返回传递的事务是否已存在于孤立池中。
+// isOrphanInPool:是孤立交易池中的孤立交易
+// isOrphanInPool返回传递的交易是否已存在于孤立池中。
 //
 //必须在保持mempool锁（用于读取）的情况下调用此函数。
 func (mp *TxPool) isOrphanInPool(hash *chainhash.Hash) bool {
@@ -506,7 +535,8 @@ func (mp *TxPool) isOrphanInPool(hash *chainhash.Hash) bool {
 // in the orphan pool.
 //
 // This function is safe for concurrent access.
-// IsOrphanInPool返回传递的事务是否已存在于孤立池中。
+// isOrphanInPool:是孤立交易池中的孤立交易
+// IsOrphanInPool返回传递的交易是否已存在于孤立池中。
 //
 //此函数对于并发访问是安全的。
 func (mp *TxPool) IsOrphanInPool(hash *chainhash.Hash) bool {
@@ -522,7 +552,8 @@ func (mp *TxPool) IsOrphanInPool(hash *chainhash.Hash) bool {
 // in the main pool or in the orphan pool.
 //
 // This function MUST be called with the mempool lock held (for reads).
-// haveTransaction返回传递的事务是否已存在于主池或孤立池中。
+// haveTransaction:有交易
+// haveTransaction返回传递的交易是否已存在于主池或孤立交易池中。
 //
 //必须在保持mempool锁（用于读取）的情况下调用此函数。
 func (mp *TxPool) haveTransaction(hash *chainhash.Hash) bool {
@@ -533,7 +564,8 @@ func (mp *TxPool) haveTransaction(hash *chainhash.Hash) bool {
 // in the main pool or in the orphan pool.
 //
 // This function is safe for concurrent access.
-// HaveTransaction返回传递的事务是否已存在于主池或孤立池中。
+// haveTransaction:有交易
+// HaveTransaction返回传递的交易是否已存在于主池或孤立池中。
 //
 //此函数对于并发访问是安全的。
 func (mp *TxPool) HaveTransaction(hash *chainhash.Hash) bool {
@@ -549,6 +581,7 @@ func (mp *TxPool) HaveTransaction(hash *chainhash.Hash) bool {
 // RemoveTransaction.  See the comment for RemoveTransaction for more details.
 //
 // This function MUST be called with the mempool lock held (for writes).
+// removeTransaction:删除交易
 // removeTransaction是实现公共RemoveTransaction的内部函数。
 // 有关详细信息，请参阅RemoveTransaction的注释。
 //
@@ -588,12 +621,14 @@ func (mp *TxPool) removeTransaction(tx *btcutil.Tx, removeRedeemers bool) {
 // they would otherwise become orphans.
 //
 // This function is safe for concurrent access.
-// RemoveTransaction从mempool中删除传递的事务。 当设置了removeRedeemers标志时，
-// 任何从被删除的事务中兑换输出的事务也将从mempool中递归删除，否则它们将成为孤立块。
+// removeTransaction:删除交易
+// RemoveTransaction从mempool中删除传递的交易。 当设置了removeRedeemers标志时，
+// 任何从被删除的交易中兑换输出的交易也将从mempool中递归删除，否则它们将成为孤立交易。
 //
 //此函数对于并发访问是安全的。
 func (mp *TxPool) RemoveTransaction(tx *btcutil.Tx, removeRedeemers bool) {
 	// Protect concurrent access.
+	//保护并发访问。
 	mp.mtx.Lock()
 	mp.removeTransaction(tx, removeRedeemers)
 	mp.mtx.Unlock()
@@ -606,8 +641,15 @@ func (mp *TxPool) RemoveTransaction(tx *btcutil.Tx, removeRedeemers bool) {
 // contain transactions which were previously unknown to the memory pool.
 //
 // This function is safe for concurrent access.
+// RemoveDoubleSpends:删除双倍花费
+// RemoveDoubleSpends删除所有从内存池中消耗传递的交易所花费的交易的交易。
+// 删除这些交易然后导致以递归方式删除依赖它们的所有交易。
+// 当块连接到主链时，这是必需的，因为块可能包含以前内存池未知的交易。
+//
+//此函数对于并发访问是安全的。
 func (mp *TxPool) RemoveDoubleSpends(tx *btcutil.Tx) {
 	// Protect concurrent access.
+	//保护并发访问。
 	mp.mtx.Lock()
 	for _, txIn := range tx.MsgTx().TxIn {
 		if txRedeemer, ok := mp.outpoints[txIn.PreviousOutPoint]; ok {
@@ -624,6 +666,11 @@ func (mp *TxPool) RemoveDoubleSpends(tx *btcutil.Tx) {
 // helper for maybeAcceptTransaction.
 //
 // This function MUST be called with the mempool lock held (for writes).
+// addTransaction:添加交易
+// addTransaction将传递的交易添加到内存池。
+// 它不应该直接调用，因为它不执行任何验证。 这是maybeAcceptTransaction的帮手。
+//
+//必须在保持mempool锁（用于写入）的情况下调用此函数。
 func (mp *TxPool) addTransaction(utxoView *blockchain.UtxoViewpoint, tx *btcutil.Tx, height int32, fee int64) *TxDesc {
 	// Add the transaction to the pool and mark the referenced outpoints
 	// as spent by the pool.
@@ -664,6 +711,11 @@ func (mp *TxPool) addTransaction(utxoView *blockchain.UtxoViewpoint, tx *btcutil
 // main chain.
 //
 // This function MUST be called with the mempool lock held (for reads).
+// checkPoolDoubleSpend:检查交易池双倍花费
+// checkPoolDoubleSpend检查传递的交易是否正在尝试花费池中其他交易已经花费的硬币。
+//请注意，它不会检查主链中已有交易的双倍花费。
+//
+//必须在保持mempool锁（用于读取）的情况下调用此函数。
 func (mp *TxPool) checkPoolDoubleSpend(tx *btcutil.Tx) error {
 	for _, txIn := range tx.MsgTx().TxIn {
 		if txR, exists := mp.outpoints[txIn.PreviousOutPoint]; exists {
@@ -680,6 +732,9 @@ func (mp *TxPool) checkPoolDoubleSpend(tx *btcutil.Tx) error {
 // CheckSpend checks whether the passed outpoint is already spent by a
 // transaction in the mempool. If that's the case the spending transaction will
 // be returned, if not nil will be returned.
+// CheckSpend：检查花费
+// CheckSpend检查传递的outpoint是否已被mempool中的交易占用。
+// 如果是这种情况，将返回支出交易，如果不是，则返回nil。
 func (mp *TxPool) CheckSpend(op wire.OutPoint) *btcutil.Tx {
 	mp.mtx.RLock()
 	txR := mp.outpoints[op]
@@ -694,6 +749,11 @@ func (mp *TxPool) CheckSpend(op wire.OutPoint) *btcutil.Tx {
 // transaction pool.
 //
 // This function MUST be called with the mempool lock held (for reads).
+// fetchInputUtxos:获取输入Utxos
+// fetchInputUtxos加载有关传递的交易引用的输入交易的utxo详细信息。
+// 首先，它从主链的角度加载细节，然后根据交易池的内容调整它们。
+//
+//必须在保持mempool锁（用于读取）的情况下调用此函数。
 func (mp *TxPool) fetchInputUtxos(tx *btcutil.Tx) (*blockchain.UtxoViewpoint, error) {
 	utxoView, err := mp.cfg.FetchUtxoView(tx)
 	if err != nil {
@@ -724,6 +784,11 @@ func (mp *TxPool) fetchInputUtxos(tx *btcutil.Tx) (*blockchain.UtxoViewpoint, er
 // orphans.
 //
 // This function is safe for concurrent access.
+// FetchTransaction:获取交易
+// FetchTransaction从交易池返回请求的交易。
+// 这只从主交易池中提取，不包括孤立交易。
+//
+//此函数对于并发访问是安全的。
 func (mp *TxPool) FetchTransaction(txHash *chainhash.Hash) (*btcutil.Tx, error) {
 	// Protect concurrent access.
 	mp.mtx.RLock()
@@ -742,12 +807,19 @@ func (mp *TxPool) FetchTransaction(txHash *chainhash.Hash) (*btcutil.Tx, error) 
 // more details.
 //
 // This function MUST be called with the mempool lock held (for writes).
+// MaybeAcceptTransaction:也许接受交易
+// maybeAcceptTransaction是实现公共MaybeAcceptTransaction的内部函数。
+// 有关详细信息，请参阅MaybeAcceptTransaction的注释。
+//
+//必须在保持mempool锁（用于写入）的情况下调用此函数。
 func (mp *TxPool) maybeAcceptTransaction(tx *btcutil.Tx, isNew, rateLimit, rejectDupOrphans bool) ([]*chainhash.Hash, *TxDesc, error) {
 	txHash := tx.Hash()
 
 	// If a transaction has iwtness data, and segwit isn't active yet, If
 	// segwit isn't active yet, then we won't accept it into the mempool as
 	// it can't be mined yet.
+	//如果一个交易有iwtness数据，并且segwit还没有激活，如果segwit尚未激活，
+	//那么我们不会接受它进入mempool，因为它还无法被挖掘。
 	if tx.MsgTx().HasWitness() {
 		segwitActive, err := mp.cfg.IsDeploymentActive(chaincfg.DeploymentSegwit)
 		if err != nil {
@@ -826,6 +898,10 @@ func (mp *TxPool) maybeAcceptTransaction(tx *btcutil.Tx, isNew, rateLimit, rejec
 	// at this point.  There is a more in-depth check that happens later
 	// after fetching the referenced transaction inputs from the main chain
 	// which examines the actual spend data and prevents double spends.
+	//交易可能不会使用与池中已有的其他交易相同的任何输出，因为这最终会导致双重花费。
+	//此检查旨在快速进行，因此仅检测交易池本身的双重花费。 此时交易仍可能是主链的双重花费。
+	//  在从主链获取引用的交易输入之后会进行更深入的检查，
+	// 该主链检查实际的支出数据并防止双重花费。
 	err = mp.checkPoolDoubleSpend(tx)
 	if err != nil {
 		return nil, nil, err
@@ -835,6 +911,8 @@ func (mp *TxPool) maybeAcceptTransaction(tx *btcutil.Tx, isNew, rateLimit, rejec
 	// to this transaction.  This function also attempts to fetch the
 	// transaction itself to be used for detecting a duplicate transaction
 	// without needing to do a separate lookup.
+	// 获取此交易输入引用的所有未使用的交易输出。
+	// 此函数还尝试获取交易本身以用于检测重复交易，而无需进行单独查找。
 	utxoView, err := mp.fetchInputUtxos(tx)
 	if err != nil {
 		if cerr, ok := err.(blockchain.RuleError); ok {
@@ -932,6 +1010,12 @@ func (mp *TxPool) maybeAcceptTransaction(tx *btcutil.Tx, isNew, rateLimit, rejec
 	// maximum allowed signature operations per transaction is less than
 	// the maximum allowed signature operations per block.
 	// TODO(roasbeef): last bool should be conditional on segwit activation
+	//注意：如果您修改此代码以接受非标准交易，则应在此处添加代码以检查交易是否执行了
+	// 合理数量的ECDSA签名验证。
+
+	//不允许具有过多签名操作的交易导致无法挖掘。 由于coinbase地址本身可以包含签名操作，
+	//因此每个交易允许的最大签名操作数小于每个块允许的最大签名操作数。
+	// TODO（roasbeef）：最后一个bool应该以segwit激活为条件
 	sigOpCost, err := blockchain.GetSigOpCost(tx, false, utxoView, true, true)
 	if err != nil {
 		if cerr, ok := err.(blockchain.RuleError); ok {
@@ -956,6 +1040,12 @@ func (mp *TxPool) maybeAcceptTransaction(tx *btcutil.Tx, isNew, rateLimit, rejec
 	// which is more desirable.  Therefore, as long as the size of the
 	// transaction does not exceeed 1000 less than the reserved space for
 	// high-priority transactions, don't require a fee for it.
+	//不允许费用过低的交易进入开采区块。
+	//
+	//大多数矿工允许他们开采的区块中的免费交易区域与用于高优先级交易的区域以及带有
+	//费用的交易并排。 对于本节，最多1000字节的交易大小被认为是安全的。
+	//此外，下面计算的最低费用将鼓励几笔小额交易以避免费用，而不是一笔更大的交易，
+	//这是更理想的。 因此，只要交易的规模不超过高优先级交易的预留空间1000，就不需要收费。
 	serializedSize := GetTxVirtualSize(tx)
 	minFee := calcMinRequiredTxRelayFee(serializedSize,
 		mp.cfg.Policy.MinRelayTxFee)
@@ -1037,6 +1127,15 @@ func (mp *TxPool) maybeAcceptTransaction(tx *btcutil.Tx, isNew, rateLimit, rejec
 // be added to the orphan pool.
 //
 // This function is safe for concurrent access.
+// MaybeAcceptTransaction:也许接受交易
+// MaybeAcceptTransaction是处理将新的独立交易插入内存池的主要工具。
+// 它包括诸如拒绝重复交易，确保交易遵循所有的功能
+//规则，检测孤立交易，以及插入内存池。
+//
+//如果交易是孤立的（缺少父交易），则交易不会添加到孤立池中，但会返回每个未知的引用父项。
+// 如果应将新的孤儿添加到孤立池中，请使用ProcessTransaction。
+//
+//此函数对于并发访问是安全的。
 func (mp *TxPool) MaybeAcceptTransaction(tx *btcutil.Tx, isNew, rateLimit bool) ([]*chainhash.Hash, *TxDesc, error) {
 	// Protect concurrent access.
 	mp.mtx.Lock()
@@ -1050,6 +1149,11 @@ func (mp *TxPool) MaybeAcceptTransaction(tx *btcutil.Tx, isNew, rateLimit bool) 
 // ProcessOrphans.  See the comment for ProcessOrphans for more details.
 //
 // This function MUST be called with the mempool lock held (for writes).
+// processOrphans：处理孤立交易
+// processOrphans是实现公共ProcessOrphans的内部函数。
+// 有关更多详细信息，请参阅ProcessOrphans的注释。
+//
+//必须在保持mempool锁（用于写入）的情况下调用此函数。
 func (mp *TxPool) processOrphans(acceptedTx *btcutil.Tx) []*TxDesc {
 	var acceptedTxns []*TxDesc
 
@@ -1139,6 +1243,13 @@ func (mp *TxPool) processOrphans(acceptedTx *btcutil.Tx) []*TxDesc {
 // no transactions were moved from the orphan pool to the mempool.
 //
 // This function is safe for concurrent access.
+// ProcessOrphans确定是否有任何孤立依赖于传递的交易哈希（它们可能不再是孤立的）
+// 并且可能将它们接受到内存池。
+// 它重复了新接受的交易的过程（以检测可能不再是孤儿的其他孤儿），直到不再有。
+//
+//它返回添加到mempool的一小部分交易。 nil slice表示没有交易从孤立池移动到mempool。
+//
+//此函数对于并发访问是安全的。
 func (mp *TxPool) ProcessOrphans(acceptedTx *btcutil.Tx) []*TxDesc {
 	mp.mtx.Lock()
 	acceptedTxns := mp.processOrphans(acceptedTx)
@@ -1158,6 +1269,14 @@ func (mp *TxPool) ProcessOrphans(acceptedTx *btcutil.Tx) []*TxDesc {
 // the passed one being accepted.
 //
 // This function is safe for concurrent access.
+// ProcessTransaction流程交易
+// ProcessTransaction是处理将新的独立交易插入内存池的主要工具。
+// 它包括拒绝重复交易，确保交易遵循所有规则，孤立交易处理以及插入内存池等功能。
+//
+//它返回添加到mempool的一小部分交易。
+//当错误为nil时，列表将包括传递的交易本身以及由于接受传递的事件而添加的任何其他孤立交易。
+//
+//此函数对于并发访问是安全的。
 func (mp *TxPool) ProcessTransaction(tx *btcutil.Tx, allowOrphan, rateLimit bool, tag Tag) ([]*TxDesc, error) {
 	log.Tracef("Processing transaction %v", tx.Hash())
 
@@ -1215,6 +1334,9 @@ func (mp *TxPool) ProcessTransaction(tx *btcutil.Tx, allowOrphan, rateLimit bool
 // include the orphan pool.
 //
 // This function is safe for concurrent access.
+// Count返回主池中的交易数。 它不包括孤立交易池。
+//
+//此函数对于并发访问是安全的。
 func (mp *TxPool) Count() int {
 	mp.mtx.RLock()
 	count := len(mp.pool)
@@ -1227,6 +1349,9 @@ func (mp *TxPool) Count() int {
 // pool.
 //
 // This function is safe for concurrent access.
+// TxHashes为内存池中的所有交易返回一片哈希值。
+//
+//此函数对于并发访问是安全的。
 func (mp *TxPool) TxHashes() []*chainhash.Hash {
 	mp.mtx.RLock()
 	hashes := make([]*chainhash.Hash, len(mp.pool))
@@ -1245,6 +1370,10 @@ func (mp *TxPool) TxHashes() []*chainhash.Hash {
 // The descriptors are to be treated as read only.
 //
 // This function is safe for concurrent access.
+// TxDescs为池中的所有交易返回一片描述符。
+//描述符将被视为只读。
+//
+//此函数对于并发访问是安全的。
 func (mp *TxPool) TxDescs() []*TxDesc {
 	mp.mtx.RLock()
 	descs := make([]*TxDesc, len(mp.pool))
@@ -1263,6 +1392,10 @@ func (mp *TxPool) TxDescs() []*TxDesc {
 //
 // This is part of the mining.TxSource interface implementation and is safe for
 // concurrent access as required by the interface contract.
+// MiningDescs为池中的所有交易返回一片挖掘描述符。
+//
+//这是mining.TxSource接口实现的一部分，是安全的
+//接口契约要求的并发访问。
 func (mp *TxPool) MiningDescs() []*mining.TxDesc {
 	mp.mtx.RLock()
 	descs := make([]*mining.TxDesc, len(mp.pool))
@@ -1280,6 +1413,9 @@ func (mp *TxPool) MiningDescs() []*mining.TxDesc {
 // populated btcjson result.
 //
 // This function is safe for concurrent access.
+// RawMempoolVerbose返回mempool中的所有条目，作为完全填充的btcjson结果。
+//
+//此函数对于并发访问是安全的
 func (mp *TxPool) RawMempoolVerbose() map[string]*btcjson.GetRawMempoolVerboseResult {
 	mp.mtx.RLock()
 	defer mp.mtx.RUnlock()
@@ -1328,12 +1464,16 @@ func (mp *TxPool) RawMempoolVerbose() map[string]*btcjson.GetRawMempoolVerboseRe
 // the main pool.  It does not include the orphan pool.
 //
 // This function is safe for concurrent access.
+// LastUpdated返回上次向主池添加或删除交易的时间。 它不包括孤立交易池。
+//
+//此函数对于并发访问是安全的。
 func (mp *TxPool) LastUpdated() time.Time {
 	return time.Unix(atomic.LoadInt64(&mp.lastUpdated), 0)
 }
 
 // New returns a new memory pool for validating and storing standalone
 // transactions until they are mined into a block.
+// New返回一个新的内存池，用于验证和存储独立交易，直到它们被挖掘到一个块中。
 func New(cfg *Config) *TxPool {
 	return &TxPool{
 		cfg:            *cfg,

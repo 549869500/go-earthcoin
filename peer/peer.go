@@ -28,65 +28,83 @@ import (
 
 const (
 	// MaxProtocolVersion is the max protocol version the peer supports.
+	// MaxProtocolVersion是节点支持的最大协议版本。
 	MaxProtocolVersion = wire.FeeFilterVersion
 
 	// DefaultTrickleInterval is the min time between attempts to send an
 	// inv message to a peer.
+	// DefaultTrickleInterval是尝试向节点发送inv消息之间的最短时间。
 	DefaultTrickleInterval = 10 * time.Second
 
 	// MinAcceptableProtocolVersion is the lowest protocol version that a
 	// connected peer may support.
+	// MinAcceptableProtocolVersion是连接节点可能支持的最低协议版本。
 	MinAcceptableProtocolVersion = wire.MultipleAddressVersion
 
 	// outputBufferSize is the number of elements the output channels use.
+	// outputBufferSize是输出通道使用的元素数。
 	outputBufferSize = 50
 
 	// invTrickleSize is the maximum amount of inventory to send in a single
 	// message when trickling inventory to remote peers.
+	// invTrickleSize是将库存流向远程节点时在单个消息中发送的最大库存量。
 	maxInvTrickleSize = 1000
 
 	// maxKnownInventory is the maximum number of items to keep in the known
 	// inventory cache.
+	// maxKnownInventory是已知库存缓存中要保留的最大项目数。
 	maxKnownInventory = 1000
 
 	// pingInterval is the interval of time to wait in between sending ping
 	// messages.
+	// pingInterval是发送ping消息之间等待的时间间隔。
 	pingInterval = 2 * time.Minute
 
 	// negotiateTimeout is the duration of inactivity before we timeout a
 	// peer that hasn't completed the initial version negotiation.
+	// negotiateTimeout：协商超时，是在我们超时未完成初始版本协商的节点之前的不活动持续时间。
 	negotiateTimeout = 30 * time.Second
 
 	// idleTimeout is the duration of inactivity before we time out a peer.
+	// idleTimeout：空闲超时，是我们超时之前不活动的持续时间。
 	idleTimeout = 5 * time.Minute
 
 	// stallTickInterval is the interval of time between each check for
 	// stalled peers.
+	// stallTickInterval是每次检查停顿的节点之间的时间间隔。
 	stallTickInterval = 15 * time.Second
 
 	// stallResponseTimeout is the base maximum amount of time messages that
 	// expect a response will wait before disconnecting the peer for
 	// stalling.  The deadlines are adjusted for callback running times and
 	// only checked on each stall tick interval.
+	// stallResponseTimeout:停止响应超时
+	// stallResponseTimeout是在断开节点停止之前，响应将等待的消息的基本最大时间量。
+	// 最后期限根据回调运行时间进行调整，并且仅在每个停顿时间间隔进行检查。
 	stallResponseTimeout = 30 * time.Second
 )
 
 var (
 	// nodeCount is the total number of peer connections made since startup
 	// and is used to assign an id to a peer.
+	// nodeCount是自启动以来所做的节点连接总数，用于为节点分配id。
 	nodeCount int32
 
 	// zeroHash is the zero value hash (all zeros).  It is defined as a
 	// convenience.
+	// zeroHash是零值哈希（全为零）。 它被定义为一种便利。
 	zeroHash chainhash.Hash
 
 	// sentNonces houses the unique nonces that are generated when pushing
 	// version messages that are used to detect self connections.
+	// sentNonces包含推送用于检测自连接的版本消息时生成的唯一nonce。
 	sentNonces = newMruNonceMap(50)
 
 	// allowSelfConns is only used to allow the tests to bypass the self
 	// connection detecting and disconnect logic since they intentionally
 	// do so for testing purposes.
+	// allowSelfConns：允许自我链接
+	// allowSelfConns仅用于允许测试绕过自连接检测和断开逻辑，因为它们故意这样做是为了测试目的。
 	allowSelfConns bool
 )
 
@@ -99,61 +117,84 @@ var (
 // blocking calls (such as WaitForShutdown) on the peer instance since the input
 // handler goroutine blocks until the callback has completed.  Doing so will
 // result in a deadlock.
+// MessageListeners定义了使用节点方的消息侦听器调用的回调函数指针。
+// 在节点初始化期间未设置为具体回调的任何侦听器都将被忽略。
+// 多个消息侦听器的执行是串行发生的，因此一个回调会阻止下一个执行。
+//
+// 注意：除非另有说明，否则这些侦听器不得直接调用节点实例上的任何阻塞调用（如WaitForShutdown），
+// 因为输入处理程序goroutine会阻塞，直到回调完成。 这样做会导致死锁。
 type MessageListeners struct {
 	// OnGetAddr is invoked when a peer receives a getaddr bitcoin message.
+	//当节点收到getaddr比特币消息时，调用OnGetAddr。
 	OnGetAddr func(p *Peer, msg *wire.MsgGetAddr)
 
 	// OnAddr is invoked when a peer receives an addr bitcoin message.
+	//当节点收到addr比特币消息时，调用OnAddr。
 	OnAddr func(p *Peer, msg *wire.MsgAddr)
 
 	// OnPing is invoked when a peer receives a ping bitcoin message.
+	//当节点收到ping比特币消息时调用OnPing。
 	OnPing func(p *Peer, msg *wire.MsgPing)
 
 	// OnPong is invoked when a peer receives a pong bitcoin message.
+	//当节点收到pong比特币消息时调用OnPong。
 	OnPong func(p *Peer, msg *wire.MsgPong)
 
 	// OnAlert is invoked when a peer receives an alert bitcoin message.
+	//当节点收到警报比特币消息时调用OnAlert。
 	OnAlert func(p *Peer, msg *wire.MsgAlert)
 
 	// OnMemPool is invoked when a peer receives a mempool bitcoin message.
+	//当节点收到mempool比特币消息时调用OnMemPool。
 	OnMemPool func(p *Peer, msg *wire.MsgMemPool)
 
 	// OnTx is invoked when a peer receives a tx bitcoin message.
+	//当节点收到tx比特币消息时调用OnTx。
 	OnTx func(p *Peer, msg *wire.MsgTx)
 
 	// OnBlock is invoked when a peer receives a block bitcoin message.
+	//当节点收到块比特币消息时，调用OnBlock。
 	OnBlock func(p *Peer, msg *wire.MsgBlock, buf []byte)
 
 	// OnCFilter is invoked when a peer receives a cfilter bitcoin message.
+	//当节点收到cfilter比特币消息时，调用OnCFilter。
 	OnCFilter func(p *Peer, msg *wire.MsgCFilter)
 
 	// OnCFHeaders is invoked when a peer receives a cfheaders bitcoin
 	// message.
+	//当节点收到cfheaders比特币消息时，调用OnCFHeaders。
 	OnCFHeaders func(p *Peer, msg *wire.MsgCFHeaders)
 
 	// OnCFCheckpt is invoked when a peer receives a cfcheckpt bitcoin
 	// message.
+	//当节点收到cfcheckpt比特币消息时，调用OnCFCheckpt。
 	OnCFCheckpt func(p *Peer, msg *wire.MsgCFCheckpt)
 
 	// OnInv is invoked when a peer receives an inv bitcoin message.
+	//当节点收到inv比特币消息时调用OnInv。
 	OnInv func(p *Peer, msg *wire.MsgInv)
 
 	// OnHeaders is invoked when a peer receives a headers bitcoin message.
+	//当节点收到头比特币消息时调用OnHeaders。
 	OnHeaders func(p *Peer, msg *wire.MsgHeaders)
 
 	// OnNotFound is invoked when a peer receives a notfound bitcoin
 	// message.
+	//当节点收到未发现的比特币消息时，会调用OnNotFound。
 	OnNotFound func(p *Peer, msg *wire.MsgNotFound)
 
 	// OnGetData is invoked when a peer receives a getdata bitcoin message.
+	//当节点收到getdata比特币消息时，调用OnGetData。
 	OnGetData func(p *Peer, msg *wire.MsgGetData)
 
 	// OnGetBlocks is invoked when a peer receives a getblocks bitcoin
 	// message.
+	//当节点收到getblocks比特币消息时，调用OnGetBlocks。
 	OnGetBlocks func(p *Peer, msg *wire.MsgGetBlocks)
 
 	// OnGetHeaders is invoked when a peer receives a getheaders bitcoin
 	// message.
+	//当节点收到getheaders比特币消息时，调用OnGetHeaders。
 	OnGetHeaders func(p *Peer, msg *wire.MsgGetHeaders)
 
 	// OnGetCFilters is invoked when a peer receives a getcfilters bitcoin
@@ -419,6 +460,23 @@ type HostToNetAddrFunc func(host string, port uint16,
 // the inventory together.  However, some helper functions for pushing messages
 // of specific types that typically require common special handling are
 // provided as a convenience.
+
+// 注意：节点的整体数据流分为3个goroutines。入站消息通过inHandler goroutine读取，
+// 通常分派给自己的处理程序。对于与数据相关的入站消息，例如块，事务和库存，
+// 数据由相应的消息处理程序处理。出站消息的数据流分为2个goroutine，queueHandler和outHandler。
+// 第一个是queueHandler，用于外部实体通过QueueMessage函数快速排队消息，
+// 无论节点方当前是否正在发送。
+//它充当外部世界和写入网络套接字的实际goroutine之间的交通警察。
+
+// Peer提供了一个基本的并发安全比特币节点，用于通过节点协议处理比特币通信。
+// 它提供全双工读写，初始握手过程的自动处理，使用统计和其他信息有关远端节点，
+// 例如它的地址，用户代理，和协议版本，输出消息排队，库存滴滤，
+// 并且能够的查询动态注册和取消注册回调以处理比特币协议消息。
+//
+// 出站邮件通常通过QueueMessage或QueueInventory排队。
+// QueueMessage适用于所有消息，包括对块和事务等数据的响应。
+// 另一方面，QueueInventory仅用于中继库存，因为它采用滴流机制将库存一起批处理。
+// 但是，为方便起见，提供了一些辅助功能，用于推送通常需要通用特殊处理的特定类型的消息。
 type Peer struct {
 	// The following variables must only be used atomically.
 	bytesReceived uint64
