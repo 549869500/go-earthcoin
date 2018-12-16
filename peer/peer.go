@@ -199,47 +199,60 @@ type MessageListeners struct {
 
 	// OnGetCFilters is invoked when a peer receives a getcfilters bitcoin
 	// message.
+	//当节点收到getcfilters比特币消息时，将调用OnGetCFilters。
 	OnGetCFilters func(p *Peer, msg *wire.MsgGetCFilters)
 
 	// OnGetCFHeaders is invoked when a peer receives a getcfheaders
 	// bitcoin message.
+	//当节点收到getcfheaders比特币消息时，调用OnGetCFHeaders。
 	OnGetCFHeaders func(p *Peer, msg *wire.MsgGetCFHeaders)
 
 	// OnGetCFCheckpt is invoked when a peer receives a getcfcheckpt
 	// bitcoin message.
+	//当节点收到getcfcheckpt比特币消息时，调用OnGetCFCheckpt。
 	OnGetCFCheckpt func(p *Peer, msg *wire.MsgGetCFCheckpt)
 
 	// OnFeeFilter is invoked when a peer receives a feefilter bitcoin message.
+	//当节点收到费用过滤器比特币消息时，调用OnFeeFilter。
 	OnFeeFilter func(p *Peer, msg *wire.MsgFeeFilter)
 
 	// OnFilterAdd is invoked when a peer receives a filteradd bitcoin message.
+	//当节点收到filteradd比特币消息时，调用OnFilterAdd。
 	OnFilterAdd func(p *Peer, msg *wire.MsgFilterAdd)
 
 	// OnFilterClear is invoked when a peer receives a filterclear bitcoin
 	// message.
+	//当节点收到filterclear比特币消息时，调用OnFilterClear。
 	OnFilterClear func(p *Peer, msg *wire.MsgFilterClear)
 
 	// OnFilterLoad is invoked when a peer receives a filterload bitcoin
 	// message.
+	//当节点收到filterload比特币消息时，调用OnFilterLoad。
 	OnFilterLoad func(p *Peer, msg *wire.MsgFilterLoad)
 
 	// OnMerkleBlock  is invoked when a peer receives a merkleblock bitcoin
 	// message.
+	//当节点收到merkleblock比特币消息时调用OnMerkleBlock。
 	OnMerkleBlock func(p *Peer, msg *wire.MsgMerkleBlock)
 
 	// OnVersion is invoked when a peer receives a version bitcoin message.
 	// The caller may return a reject message in which case the message will
 	// be sent to the peer and the peer will be disconnected.
+	//当节点收到版本比特币消息时，调用COnVersion。
+	//调用者可能会返回拒绝消息，在这种情况下，消息将被发送到节点，并且节点将被断开。
 	OnVersion func(p *Peer, msg *wire.MsgVersion) *wire.MsgReject
 
 	// OnVerAck is invoked when a peer receives a verack bitcoin message.
+	//当节点收到verack比特币消息时，调用OnVerAck。
 	OnVerAck func(p *Peer, msg *wire.MsgVerAck)
 
 	// OnReject is invoked when a peer receives a reject bitcoin message.
+	//当节点收到拒绝比特币消息时，调用OnReject。
 	OnReject func(p *Peer, msg *wire.MsgReject)
 
 	// OnSendHeaders is invoked when a peer receives a sendheaders bitcoin
 	// message.
+	//当节点收到sendheaders比特币消息时，调用OnSendHeaders。
 	OnSendHeaders func(p *Peer, msg *wire.MsgSendHeaders)
 
 	// OnRead is invoked when a peer receives a bitcoin message.  It
@@ -249,77 +262,107 @@ type MessageListeners struct {
 	// useful for circumstances such as keeping track of server-wide byte
 	// counts or working with custom message types for which the peer does
 	// not directly provide a callback.
+	// 当节点收到比特币消息时调用OnRead。 它由读取的字节数，消息以及是否发生读取错误组成。
+	// 通常，调用者将选择使用特定消息类型的回调，
+	// 但这对于跟踪服务器范围的字节计数或使用节点不直接提供回调的自定义消息类型等情况非常有用。
 	OnRead func(p *Peer, bytesRead int, msg wire.Message, err error)
 
 	// OnWrite is invoked when we write a bitcoin message to a peer.  It
 	// consists of the number of bytes written, the message, and whether or
 	// not an error in the write occurred.  This can be useful for
 	// circumstances such as keeping track of server-wide byte counts.
+	// 当我们向节点写入比特币消息时调用OnWrite。
+	// 它由写入的字节数，消息以及是否发生写入错误组成。
+	// 这对于跟踪服务器范围的字节计数等情况非常有用。
 	OnWrite func(p *Peer, bytesWritten int, msg wire.Message, err error)
 }
 
 // Config is the struct to hold configuration options useful to Peer.
+// Config是保存对节点有用的配置选项的结构。
 type Config struct {
 	// NewestBlock specifies a callback which provides the newest block
 	// details to the peer as needed.  This can be nil in which case the
 	// peer will report a block height of 0, however it is good practice for
 	// peers to specify this so their currently best known is accurately
 	// reported.
+	// NewestBlock指定一个回调，根据需要向节点提供最新的块详细信息。
+	// 这可以是nil，在这种情况下，节点将报告块高度为0，但是节点指定此值是一种好习惯，
+	// 因此可以准确地报告它们当前最为人知的情况。
 	NewestBlock HashFunc
 
 	// HostToNetAddress returns the netaddress for the given host. This can be
 	// nil in  which case the host will be parsed as an IP address.
+	// HostToNetAddress返回给定主机的netaddress。
+	// 这可以是零，在这种情况下，主机将被解析为IP地址。
 	HostToNetAddress HostToNetAddrFunc
 
 	// Proxy indicates a proxy is being used for connections.  The only
 	// effect this has is to prevent leaking the tor proxy address, so it
 	// only needs to specified if using a tor proxy.
+	//代理表示正在使用代理进行连接。
+	// 唯一的影响是防止泄漏代理地址，因此只需要指定是否使用tor代理。
 	Proxy string
 
 	// UserAgentName specifies the user agent name to advertise.  It is
 	// highly recommended to specify this value.
+	// UserAgentName指定要通告的用户代理名称。 强烈建议指定此值。
 	UserAgentName string
 
 	// UserAgentVersion specifies the user agent version to advertise.  It
 	// is highly recommended to specify this value and that it follows the
 	// form "major.minor.revision" e.g. "2.6.41".
+	// UserAgentVersion指定要通告的用户代理版本。
+	// 强烈建议指定此值，并且它遵循“major.minor.revision”形式，例如“2.6.41”。
 	UserAgentVersion string
 
 	// UserAgentComments specify the user agent comments to advertise.  These
 	// values must not contain the illegal characters specified in BIP 14:
 	// '/', ':', '(', ')'.
+	// UserAgentComments指定要广告的用户代理注释。 这些值不得包含BIP 14中指定的非法字符：
+	//'/'，'：'，'（'，'）'。
 	UserAgentComments []string
 
 	// ChainParams identifies which chain parameters the peer is associated
 	// with.  It is highly recommended to specify this field, however it can
 	// be omitted in which case the test network will be used.
+	// ChainParams识别节点与哪些链参数相关联。
+	// 强烈建议指定此字段，但在这种情况下可以省略测试网络。
 	ChainParams *chaincfg.Params
 
 	// Services specifies which services to advertise as supported by the
 	// local peer.  This field can be omitted in which case it will be 0
 	// and therefore advertise no supported services.
+	// Services指定本地节点支持的通告哪些服务。
+	// 该字段可以省略，在这种情况下它将为0，因此不通告任何支持的服务。
 	Services wire.ServiceFlag
 
 	// ProtocolVersion specifies the maximum protocol version to use and
 	// advertise.  This field can be omitted in which case
 	// peer.MaxProtocolVersion will be used.
+	// ProtocolVersion指定要使用和通告的最大协议版本。
+	// 可以省略该字段，在这种情况下将使用peer.MaxProtocolVersion。
 	ProtocolVersion uint32
 
 	// DisableRelayTx specifies if the remote peer should be informed to
 	// not send inv messages for transactions.
+	// DisableRelayTx指定是否应通知远程节点不发送事务的inv消息。
 	DisableRelayTx bool
 
 	// Listeners houses callback functions to be invoked on receiving peer
 	// messages.
+	//监听器包含在接收节点消息时调用的回调函数。
 	Listeners MessageListeners
 
 	// TrickleInterval is the duration of the ticker which trickles down the
 	// inventory to a peer.
+	// TrickleInterval是股票代码的持续时间，它将库存细化到同行。
 	TrickleInterval time.Duration
 }
 
 // minUint32 is a helper function to return the minimum of two uint32s.
 // This avoids a math import and the need to cast to floats.
+// minUint32是一个辅助函数，用于返回两个uint32里面最小的一个。
+//这可以避免数学导入以及转换为浮点数的需要。
 func minUint32(a, b uint32) uint32 {
 	if a < b {
 		return a
@@ -330,6 +373,8 @@ func minUint32(a, b uint32) uint32 {
 // newNetAddress attempts to extract the IP address and port from the passed
 // net.Addr interface and create a bitcoin NetAddress structure using that
 // information.
+// newNetAddress尝试从传递的net.Addr接口中提取IP地址和端口，
+// 并使用该信息创建比特币NetAddress结构。
 func newNetAddress(addr net.Addr, services wire.ServiceFlag) (*wire.NetAddress, error) {
 	// addr will be a net.TCPAddr when not using a proxy.
 	if tcpAddr, ok := addr.(*net.TCPAddr); ok {
@@ -369,6 +414,8 @@ func newNetAddress(addr net.Addr, services wire.ServiceFlag) (*wire.NetAddress, 
 // outMsg is used to house a message to be sent along with a channel to signal
 // when the message has been sent (or won't be sent due to things such as
 // shutdown)
+// outMsg用于存储要与频道一起发送的消息，
+// 以便在消息发送时发出信号（或由于关机之类的事情而不会发送）
 type outMsg struct {
 	msg      wire.Message
 	doneChan chan<- struct{}
@@ -376,32 +423,41 @@ type outMsg struct {
 }
 
 // stallControlCmd represents the command of a stall control message.
+// stallControlCmd表示停顿控制消息的命令。
 type stallControlCmd uint8
 
 // Constants for the command of a stall control message.
+//停顿控制消息命令的常量。
 const (
 	// sccSendMessage indicates a message is being sent to the remote peer.
+	// sccSendMessage表示正在向远程节点发送消息。
 	sccSendMessage stallControlCmd = iota
 
 	// sccReceiveMessage indicates a message has been received from the
 	// remote peer.
+	// sccReceiveMessage表示已从远程节点收到消息。
 	sccReceiveMessage
 
 	// sccHandlerStart indicates a callback handler is about to be invoked.
+	// sccHandlerStart表示即将调用回调处理程序。
 	sccHandlerStart
 
 	// sccHandlerStart indicates a callback handler has completed.
+	// sccHandlerStart表示回调处理程序已完成。
 	sccHandlerDone
 )
 
 // stallControlMsg is used to signal the stall handler about specific events
 // so it can properly detect and handle stalled remote peers.
+// stallControlMsg用于向停止处理程序发出有关特定事件的信号，
+// 以便它可以正确检测和处理停滞的远程节点。
 type stallControlMsg struct {
 	command stallControlCmd
 	message wire.Message
 }
 
 // StatsSnap is a snapshot of peer stats at a point in time.
+// StatsSnap是某个时间点的节点统计信息的快照。
 type StatsSnap struct {
 	ID             int32
 	Addr           string
@@ -424,13 +480,17 @@ type StatsSnap struct {
 
 // HashFunc is a function which returns a block hash, height and error
 // It is used as a callback to get newest block details.
+// HashFunc是一个返回块哈希，高度和错误的函数
+//它用作回调以获取最新的块详细信息。
 type HashFunc func() (hash *chainhash.Hash, height int32, err error)
 
 // AddrFunc is a func which takes an address and returns a related address.
+// AddrFunc是一个func，它接收一个地址并返回一个相关的地址。
 type AddrFunc func(remoteAddr *wire.NetAddress) *wire.NetAddress
 
 // HostToNetAddrFunc is a func which takes a host, port, services and returns
 // the netaddress.
+// HostToNetAddrFunc是一个func，它接受主机，端口，服务并返回netaddress。
 type HostToNetAddrFunc func(host string, port uint16,
 	services wire.ServiceFlag) (*wire.NetAddress, error)
 
@@ -479,6 +539,7 @@ type HostToNetAddrFunc func(host string, port uint16,
 // 但是，为方便起见，提供了一些辅助功能，用于推送通常需要通用特殊处理的特定类型的消息。
 type Peer struct {
 	// The following variables must only be used atomically.
+	//以下变量只能以原子方式使用。
 	bytesReceived uint64
 	bytesSent     uint64
 	lastRecv      int64
@@ -490,19 +551,24 @@ type Peer struct {
 
 	// These fields are set at creation time and never modified, so they are
 	// safe to read from concurrently without a mutex.
+	//这些字段在创建时设置，从不修改，因此可以安全地在没有互斥锁的情况下同时读取。
 	addr    string
 	cfg     Config
 	inbound bool
 
-	flagsMtx             sync.Mutex // protects the peer flags below
-	na                   *wire.NetAddress
-	id                   int32
-	userAgent            string
-	services             wire.ServiceFlag
-	versionKnown         bool
-	advertisedProtoVer   uint32 // protocol version advertised by remote
-	protocolVersion      uint32 // negotiated protocol version
-	sendHeadersPreferred bool   // peer sent a sendheaders message
+	//保护下面的节点标志
+	flagsMtx     sync.Mutex // protects the peer flags below
+	na           *wire.NetAddress
+	id           int32
+	userAgent    string
+	services     wire.ServiceFlag
+	versionKnown bool
+	//远程通告的协议版本
+	advertisedProtoVer uint32 // protocol version advertised by remote
+	//协商协议版本
+	protocolVersion uint32 // negotiated protocol version
+	// peer发送了sendheaders消息
+	sendHeadersPreferred bool // peer sent a sendheaders message
 	verAckReceived       bool
 	witnessEnabled       bool
 
@@ -518,15 +584,19 @@ type Peer struct {
 
 	// These fields keep track of statistics for the peer and are protected
 	// by the statsMtx mutex.
+	//这些字段跟踪节点的统计信息，并受statsMtx互斥锁保护。
 	statsMtx           sync.RWMutex
 	timeOffset         int64
 	timeConnected      time.Time
 	startingHeight     int32
 	lastBlock          int32
 	lastAnnouncedBlock *chainhash.Hash
-	lastPingNonce      uint64    // Set to nonce if we have a pending ping.
-	lastPingTime       time.Time // Time we sent last ping.
-	lastPingMicros     int64     // Time for last ping to return.
+	//如果我们有一个挂起的ping，则设置为nonce。
+	lastPingNonce uint64 // Set to nonce if we have a pending ping.
+	//我们发送最后一次ping的时间。
+	lastPingTime time.Time // Time we sent last ping.
+	//上次ping返回的时间。
+	lastPingMicros int64 // Time for last ping to return.
 
 	stallControl  chan stallControlMsg
 	outputQueue   chan outMsg
@@ -543,6 +613,9 @@ type Peer struct {
 // string.
 //
 // This function is safe for concurrent access.
+// String将节点的地址和方向性作为人类可读的字符串返回。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) String() string {
 	return fmt.Sprintf("%s (%s)", p.addr, directionString(p.inbound))
 }
@@ -550,6 +623,9 @@ func (p *Peer) String() string {
 // UpdateLastBlockHeight updates the last known block for the peer.
 //
 // This function is safe for concurrent access.
+// UpdateLastBlockHeight更新节点的最后一个已知块。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) UpdateLastBlockHeight(newHeight int32) {
 	p.statsMtx.Lock()
 	log.Tracef("Updating last block height of peer %v from %v to %v",
@@ -562,6 +638,9 @@ func (p *Peer) UpdateLastBlockHeight(newHeight int32) {
 // peer is known to have announced.
 //
 // This function is safe for concurrent access.
+// UpdateLastAnnouncedBlock更新已知此节点已宣布的最后一个块哈希的元数据。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) UpdateLastAnnouncedBlock(blkHash *chainhash.Hash) {
 	log.Tracef("Updating last blk for peer %v, %v", p.addr, blkHash)
 
@@ -574,6 +653,9 @@ func (p *Peer) UpdateLastAnnouncedBlock(blkHash *chainhash.Hash) {
 // for the peer.
 //
 // This function is safe for concurrent access.
+// AddKnownInventory将传递的库存添加到节点的已知库存缓存中。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) AddKnownInventory(invVect *wire.InvVect) {
 	p.knownInventory.Add(invVect)
 }
@@ -581,6 +663,9 @@ func (p *Peer) AddKnownInventory(invVect *wire.InvVect) {
 // StatsSnapshot returns a snapshot of the current peer flags and statistics.
 //
 // This function is safe for concurrent access.
+// StatsSnapshot返回当前节点标志和统计信息的快照。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) StatsSnapshot() *StatsSnap {
 	p.statsMtx.RLock()
 
@@ -593,6 +678,7 @@ func (p *Peer) StatsSnapshot() *StatsSnap {
 	p.flagsMtx.Unlock()
 
 	// Get a copy of all relevant flags and stats.
+	//获取所有相关标志和统计信息的副本。
 	statsSnap := &StatsSnap{
 		ID:             id,
 		Addr:           addr,
@@ -620,6 +706,9 @@ func (p *Peer) StatsSnapshot() *StatsSnap {
 // ID returns the peer id.
 //
 // This function is safe for concurrent access.
+// ID返回节点ID。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) ID() int32 {
 	p.flagsMtx.Lock()
 	id := p.id
@@ -631,6 +720,9 @@ func (p *Peer) ID() int32 {
 // NA returns the peer network address.
 //
 // This function is safe for concurrent access.
+// NA返回节点网络地址。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) NA() *wire.NetAddress {
 	p.flagsMtx.Lock()
 	na := p.na
@@ -642,15 +734,22 @@ func (p *Peer) NA() *wire.NetAddress {
 // Addr returns the peer address.
 //
 // This function is safe for concurrent access.
+// Addr返回节点地址。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) Addr() string {
 	// The address doesn't change after initialization, therefore it is not
 	// protected by a mutex.
+	//初始化后地址不会更改，因此它不受互斥锁保护。
 	return p.addr
 }
 
 // Inbound returns whether the peer is inbound.
 //
 // This function is safe for concurrent access.
+//Inbound 返回节点是否入站。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) Inbound() bool {
 	return p.inbound
 }
@@ -658,6 +757,9 @@ func (p *Peer) Inbound() bool {
 // Services returns the services flag of the remote peer.
 //
 // This function is safe for concurrent access.
+// Services返回远程节点的服务标志。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) Services() wire.ServiceFlag {
 	p.flagsMtx.Lock()
 	services := p.services
@@ -669,6 +771,9 @@ func (p *Peer) Services() wire.ServiceFlag {
 // UserAgent returns the user agent of the remote peer.
 //
 // This function is safe for concurrent access.
+// UserAgent返回远程节点的用户代理。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) UserAgent() string {
 	p.flagsMtx.Lock()
 	userAgent := p.userAgent
@@ -680,6 +785,9 @@ func (p *Peer) UserAgent() string {
 // LastAnnouncedBlock returns the last announced block of the remote peer.
 //
 // This function is safe for concurrent access.
+// LastAnnouncedBlock返回最后公布的远程节点块。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) LastAnnouncedBlock() *chainhash.Hash {
 	p.statsMtx.RLock()
 	lastAnnouncedBlock := p.lastAnnouncedBlock
@@ -691,6 +799,9 @@ func (p *Peer) LastAnnouncedBlock() *chainhash.Hash {
 // LastPingNonce returns the last ping nonce of the remote peer.
 //
 // This function is safe for concurrent access.
+// LastPingNonce返回远程节点的最后一个ping nonce。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) LastPingNonce() uint64 {
 	p.statsMtx.RLock()
 	lastPingNonce := p.lastPingNonce
@@ -702,6 +813,9 @@ func (p *Peer) LastPingNonce() uint64 {
 // LastPingTime returns the last ping time of the remote peer.
 //
 // This function is safe for concurrent access.
+// LastPingTime返回远程节点的最后一次ping时间。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) LastPingTime() time.Time {
 	p.statsMtx.RLock()
 	lastPingTime := p.lastPingTime
@@ -713,6 +827,9 @@ func (p *Peer) LastPingTime() time.Time {
 // LastPingMicros returns the last ping micros of the remote peer.
 //
 // This function is safe for concurrent access.
+// LastPingMicros返回远程节点的最后一个ping微控制器。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) LastPingMicros() int64 {
 	p.statsMtx.RLock()
 	lastPingMicros := p.lastPingMicros
@@ -725,6 +842,9 @@ func (p *Peer) LastPingMicros() int64 {
 // locally.
 //
 // This function is safe for concurrent access.
+// VersionKnown返回节点的版本是否在本地已知。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) VersionKnown() bool {
 	p.flagsMtx.Lock()
 	versionKnown := p.versionKnown
@@ -737,6 +857,9 @@ func (p *Peer) VersionKnown() bool {
 // peer.
 //
 // This function is safe for concurrent access.
+// VerAckReceived返回节点是否收到verack消息。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) VerAckReceived() bool {
 	p.flagsMtx.Lock()
 	verAckReceived := p.verAckReceived
@@ -748,6 +871,9 @@ func (p *Peer) VerAckReceived() bool {
 // ProtocolVersion returns the negotiated peer protocol version.
 //
 // This function is safe for concurrent access.
+// ProtocolVersion返回协商的节点协议版本。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) ProtocolVersion() uint32 {
 	p.flagsMtx.Lock()
 	protocolVersion := p.protocolVersion
@@ -759,6 +885,10 @@ func (p *Peer) ProtocolVersion() uint32 {
 // LastBlock returns the last block of the peer.
 //
 // This function is safe for concurrent access.
+// LastBlock返回节点的最后一个块。
+//
+//此函数对于并发访问是安全的。
+
 func (p *Peer) LastBlock() int32 {
 	p.statsMtx.RLock()
 	lastBlock := p.lastBlock
@@ -770,6 +900,9 @@ func (p *Peer) LastBlock() int32 {
 // LastSend returns the last send time of the peer.
 //
 // This function is safe for concurrent access.
+// LastSend返回节点的最后发送时间。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) LastSend() time.Time {
 	return time.Unix(atomic.LoadInt64(&p.lastSend), 0)
 }
@@ -777,6 +910,9 @@ func (p *Peer) LastSend() time.Time {
 // LastRecv returns the last recv time of the peer.
 //
 // This function is safe for concurrent access.
+// LastRecv返回节点的最后一次recv时间。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) LastRecv() time.Time {
 	return time.Unix(atomic.LoadInt64(&p.lastRecv), 0)
 }
@@ -784,6 +920,9 @@ func (p *Peer) LastRecv() time.Time {
 // LocalAddr returns the local address of the connection.
 //
 // This function is safe fo concurrent access.
+// LocalAddr返回连接的本地地址。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) LocalAddr() net.Addr {
 	var localAddr net.Addr
 	if atomic.LoadInt32(&p.connected) != 0 {
@@ -795,6 +934,9 @@ func (p *Peer) LocalAddr() net.Addr {
 // BytesSent returns the total number of bytes sent by the peer.
 //
 // This function is safe for concurrent access.
+// BytesSent返回节点发送的总字节数。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) BytesSent() uint64 {
 	return atomic.LoadUint64(&p.bytesSent)
 }
@@ -802,6 +944,9 @@ func (p *Peer) BytesSent() uint64 {
 // BytesReceived returns the total number of bytes received by the peer.
 //
 // This function is safe for concurrent access.
+// BytesReceived返回节点接收的总字节数。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) BytesReceived() uint64 {
 	return atomic.LoadUint64(&p.bytesReceived)
 }
@@ -809,6 +954,9 @@ func (p *Peer) BytesReceived() uint64 {
 // TimeConnected returns the time at which the peer connected.
 //
 // This function is safe for concurrent access.
+// TimeConnected返回节点连接的时间。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) TimeConnected() time.Time {
 	p.statsMtx.RLock()
 	timeConnected := p.timeConnected
@@ -822,6 +970,11 @@ func (p *Peer) TimeConnected() time.Time {
 // indicate the remote peer's time is before the local time.
 //
 // This function is safe for concurrent access.
+// TimeOffset返回本地时间偏离节点在初始协商阶段报告的时间的秒数。
+// 负值表示远程节点的时间早于本地时间。
+//
+//此函数对于并发访问是安全的。
+
 func (p *Peer) TimeOffset() int64 {
 	p.statsMtx.RLock()
 	timeOffset := p.timeOffset
@@ -834,6 +987,9 @@ func (p *Peer) TimeOffset() int64 {
 // initial negotiation phase.
 //
 // This function is safe for concurrent access.
+// StartingHeight返回节点在初始协商阶段报告的最后已知高度。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) StartingHeight() int32 {
 	p.statsMtx.RLock()
 	startingHeight := p.startingHeight
@@ -846,6 +1002,9 @@ func (p *Peer) StartingHeight() int32 {
 // inventory vectors for blocks.
 //
 // This function is safe for concurrent access.
+//如果节点想要标题消息而不是块的库存向量，则WantsHeaders返回。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) WantsHeaders() bool {
 	p.flagsMtx.Lock()
 	sendHeadersPreferred := p.sendHeadersPreferred
@@ -858,6 +1017,9 @@ func (p *Peer) WantsHeaders() bool {
 // segregated witness.
 //
 // This function is safe for concurrent access.
+//如果节点发出信号表明它支持隔离的见证，则IsWitnessEnabled返回true。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) IsWitnessEnabled() bool {
 	p.flagsMtx.Lock()
 	witnessEnabled := p.witnessEnabled
@@ -874,6 +1036,12 @@ func (p *Peer) IsWitnessEnabled() bool {
 // message will be sent if there are no entries in the provided addresses slice.
 //
 // This function is safe for concurrent access.
+// PushAddrMsg使用提供的地址向连接的节点发送addr消息。
+// 此功能比通过QueueMessage手动发送消息更有用，因为它会自动将地址限制为消息允许的最大数量，
+// 并在有太多时将所选地址随机化。
+// 它返回实际发送的地址，如果提供的地址片中没有条目，则不会发送任何消息。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) PushAddrMsg(addresses []*wire.NetAddress) ([]*wire.NetAddress, error) {
 	addressCount := len(addresses)
 
@@ -906,9 +1074,14 @@ func (p *Peer) PushAddrMsg(addresses []*wire.NetAddress) ([]*wire.NetAddress, er
 // and stop hash.  It will ignore back-to-back duplicate requests.
 //
 // This function is safe for concurrent access.
+// PushGetBlocksMsg为提供的块定位器发送getblocks消息并停止哈希。 它将忽略背对背的重复请求。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) PushGetBlocksMsg(locator blockchain.BlockLocator, stopHash *chainhash.Hash) error {
 	// Extract the begin hash from the block locator, if one was specified,
 	// to use for filtering duplicate getblocks requests.
+	//从块定位器中提取begin哈希，如果指定了一个，
+	//用于过滤重复的getblocks请求。
 	var beginHash *chainhash.Hash
 	if len(locator) > 0 {
 		beginHash = locator[0]
@@ -950,9 +1123,14 @@ func (p *Peer) PushGetBlocksMsg(locator blockchain.BlockLocator, stopHash *chain
 // and stop hash.  It will ignore back-to-back duplicate requests.
 //
 // This function is safe for concurrent access.
+// PushGetHeadersMsg为提供的块定位器发送getblocks消息并停止哈希。 它将忽略背对背的重复请求。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) PushGetHeadersMsg(locator blockchain.BlockLocator, stopHash *chainhash.Hash) error {
 	// Extract the begin hash from the block locator, if one was specified,
 	// to use for filtering duplicate getheaders requests.
+	//从块定位器中提取begin哈希，如果指定了一个，
+	//用于过滤重复的getheaders请求。
 	var beginHash *chainhash.Hash
 	if len(locator) > 0 {
 		beginHash = locator[0]
@@ -997,9 +1175,15 @@ func (p *Peer) PushGetHeadersMsg(locator blockchain.BlockLocator, stopHash *chai
 // function to block until the reject message has actually been sent.
 //
 // This function is safe for concurrent access.
+// PushRejectMsg为提供的命令发送拒绝消息，拒绝代码，拒绝原因和哈希。
+// 仅当命令是tx或块时才使用哈希，而在其他情况下应该为nil。
+// wait参数将导致函数阻塞，直到实际发送了拒绝消息。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) PushRejectMsg(command string, code wire.RejectCode, reason string, hash *chainhash.Hash, wait bool) {
 	// Don't bother sending the reject message if the protocol version
 	// is too low.
+	//如果协议版本太低，请不要打扰发送拒绝消息。
 	if p.VersionKnown() && p.ProtocolVersion() < wire.RejectVersion {
 		return
 	}
@@ -1031,8 +1215,13 @@ func (p *Peer) PushRejectMsg(command string, code wire.RejectCode, reason string
 // recent clients (protocol version > BIP0031Version), it replies with a pong
 // message.  For older clients, it does nothing and anything other than failure
 // is considered a successful ping.
+//当节点收到ping比特币消息时，调用handlePingMsg。
+// 对于最近的客户端（协议版本> BIP0031版本），它会回复一条pong消息。
+// 对于较旧的客户端，它什么都不做，除了失败之外的任何事情都被视为成功的ping。
 func (p *Peer) handlePingMsg(msg *wire.MsgPing) {
 	// Only reply with pong if the message is from a new enough client.
+	//如果消息来自足够新的客户端，则仅使用pong进行回复。
+
 	if p.ProtocolVersion() > wire.BIP0031Version {
 		// Include nonce from ping so pong can be identified.
 		p.QueueMessage(wire.NewMsgPong(msg.Nonce), nil)
@@ -1043,6 +1232,9 @@ func (p *Peer) handlePingMsg(msg *wire.MsgPing) {
 // updates the ping statistics as required for recent clients (protocol
 // version > BIP0031Version).  There is no effect for older clients or when a
 // ping was not previously sent.
+//当节点收到pong比特币消息时，调用handlePongMsg。
+// 它根据最近客户端的需要更新ping统计信息（协议版本> BIP0031Version）。
+// 对于较旧的客户端或之前未发送ping的情况没有任何影响。
 func (p *Peer) handlePongMsg(msg *wire.MsgPong) {
 	// Arguably we could use a buffered channel here sending data
 	// in a fifo manner whenever we send a ping, or a list keeping track of
@@ -1051,6 +1243,11 @@ func (p *Peer) handlePongMsg(msg *wire.MsgPong) {
 	// and overlapping pings will be ignored. It is unlikely to occur
 	// without large usage of the ping rpc call since we ping infrequently
 	// enough that if they overlap we would have timed out the peer.
+	// 我们可以使用缓冲通道，每当我们发送ping时，都会以fifo方式发送数据，
+	// 或者跟踪每次ping的时间。 现在我们只是尽力而为，只记录最后发送的ping的统计数据。
+	// 任何先前和重叠的ping都将被忽略。
+	// 如果没有大量使用ping rpc调用，就不太可能发生这种情况，因为我们不经常ping通，
+	// 如果它们重叠，我们就会超时。
 	if p.ProtocolVersion() > wire.BIP0031Version {
 		p.statsMtx.Lock()
 		if p.lastPingNonce != 0 && msg.Nonce == p.lastPingNonce {
@@ -1063,6 +1260,7 @@ func (p *Peer) handlePongMsg(msg *wire.MsgPong) {
 }
 
 // readMessage reads the next bitcoin message from the peer with logging.
+// readMessage使用日志记录从节点读取下一个比特币消息。
 func (p *Peer) readMessage(encoding wire.MessageEncoding) (wire.Message, []byte, error) {
 	n, msg, buf, err := wire.ReadMessageWithEncodingN(p.conn,
 		p.ProtocolVersion(), p.cfg.ChainParams.Net, encoding)
@@ -1076,6 +1274,7 @@ func (p *Peer) readMessage(encoding wire.MessageEncoding) (wire.Message, []byte,
 
 	// Use closures to log expensive operations so they are only run when
 	// the logging level requires it.
+	//使用闭包记录昂贵的操作，以便它们仅在日志记录级别需要时运行。
 	log.Debugf("%v", newLogClosure(func() string {
 		// Debug summary of message.
 		summary := messageSummary(msg)
@@ -1096,8 +1295,10 @@ func (p *Peer) readMessage(encoding wire.MessageEncoding) (wire.Message, []byte,
 }
 
 // writeMessage sends a bitcoin message to the peer with logging.
+// writeMessage通过日志记录向节点发送比特币消息。
 func (p *Peer) writeMessage(msg wire.Message, enc wire.MessageEncoding) error {
 	// Don't do anything if we're disconnecting.
+	//如果我们断开连接，不要做任何事情。
 	if atomic.LoadInt32(&p.disconnect) != 0 {
 		return nil
 	}
@@ -1139,8 +1340,11 @@ func (p *Peer) writeMessage(msg wire.Message, enc wire.MessageEncoding) error {
 // isAllowedReadError returns whether or not the passed error is allowed without
 // disconnecting the peer.  In particular, regression tests need to be allowed
 // to send malformed messages without the peer being disconnected.
+// isAllowedReadError返回是否允许传递错误而不断开节点。
+// 特别是，需要允许回归测试发送格式错误的消息，而不会断开节点的连接。
 func (p *Peer) isAllowedReadError(err error) bool {
 	// Only allow read errors in regression test mode.
+	//仅允许在回归测试模式下读取错误。
 	if p.cfg.ChainParams.Net != wire.TestNet {
 		return false
 	}
@@ -1168,9 +1372,12 @@ func (p *Peer) isAllowedReadError(err error) bool {
 // shouldHandleReadError returns whether or not the passed error, which is
 // expected to have come from reading from the remote peer in the inHandler,
 // should be logged and responded to with a reject message.
+// shouldHandleReadError返回是否应该记录传递的错误，
+// 该错误是预期来自inHandler中远程节点的读取，并且应该使用拒绝消息进行响应。
 func (p *Peer) shouldHandleReadError(err error) bool {
 	// No logging or reject message when the peer is being forcibly
 	// disconnected.
+	//强制断开节点时没有记录或拒绝消息。
 	if atomic.LoadInt32(&p.disconnect) != 0 {
 		return false
 	}
@@ -1189,6 +1396,7 @@ func (p *Peer) shouldHandleReadError(err error) bool {
 
 // maybeAddDeadline potentially adds a deadline for the appropriate expected
 // response for the passed wire protocol command to the pending responses map.
+// maybeAddDeadline可能会将传递的有线协议命令的相应预期响应的截止时间添加到待处理的响应映射中。
 func (p *Peer) maybeAddDeadline(pendingResponses map[string]time.Time, msgCmd string) {
 	// Setup a deadline for each message being sent that expects a response.
 	//
@@ -1196,6 +1404,10 @@ func (p *Peer) maybeAddDeadline(pendingResponses map[string]time.Time, msgCmd st
 	// sent asynchronously and as a result of a long backlock of messages,
 	// such as is typical in the case of initial block download, the
 	// response won't be received in time.
+	//为每个要发送响应的消息设置截止日期。
+	//
+	//注意：这里有意忽略Ping，因为它们通常是异步发送的，并且由于长时间的消息后锁，
+	//例如在初始块下载的情况下通常不会及时收到响应。
 	deadline := time.Now().Add(stallResponseTimeout)
 	switch msgCmd {
 	case wire.CmdVersion:
@@ -1221,6 +1433,7 @@ func (p *Peer) maybeAddDeadline(pendingResponses map[string]time.Time, msgCmd st
 		// Expects a headers message.  Use a longer deadline since it
 		// can take a while for the remote peer to load all of the
 		// headers.
+		//期待标题消息。 使用更长的截止日期，因为远程节点可能需要一段时间才能加载所有标头。
 		deadline = time.Now().Add(stallResponseTimeout * 3)
 		pendingResponses[wire.CmdHeaders] = deadline
 	}
@@ -1237,6 +1450,8 @@ func (p *Peer) stallHandler() {
 	// messages aren't read until the previous one is finished processing
 	// (which includes callbacks), so the deadline for receiving a response
 	// for a given message must account for the processing time as well.
+	// 这些变量用于在执行回调时调整截止时间。 这样做是因为在前一个消息完成处理（包括回调）
+	// 之前不会读取新消息，因此接收给定消息的响应的截止时间也必须考虑处理时间。
 	var handlerActive bool
 	var handlersStartTime time.Time
 	var deadlineOffset time.Duration
@@ -1261,6 +1476,7 @@ out:
 			case sccSendMessage:
 				// Add a deadline for the expected response
 				// message if needed.
+				//如果需要，为预期的响应消息添加截止日期。
 				p.maybeAddDeadline(pendingResponses,
 					msg.message.Command())
 
@@ -1269,6 +1485,8 @@ out:
 				// response map.  Since certain commands expect
 				// one of a group of responses, remove
 				// everything in the expected group accordingly.
+				//从预期的响应映射中删除收到的消息。
+				// 由于某些命令需要一组响应中的一个，因此相应地删除预期组中的所有内容。
 				switch msgCmd := msg.message.Command(); msgCmd {
 				case wire.CmdBlock:
 					fallthrough
@@ -1322,6 +1540,7 @@ out:
 			// Calculate the offset to apply to the deadline based
 			// on how long the handlers have taken to execute since
 			// the last tick.
+			//根据处理程序自上次打勾后执行的时间长度，计算应用于截止时间的偏移量。
 			now := time.Now()
 			offset := deadlineOffset
 			if handlerActive {
@@ -1330,6 +1549,7 @@ out:
 
 			// Disconnect the peer if any of the pending responses
 			// don't arrive by their adjusted deadline.
+			//如果任何待处理的响应未按调整的截止日期到达，请断开节点的连接。
 			for command, deadline := range pendingResponses {
 				if now.Before(deadline.Add(offset)) {
 					continue
@@ -1348,6 +1568,7 @@ out:
 		case <-p.inQuit:
 			// The stall handler can exit once both the input and
 			// output handler goroutines are done.
+			//一旦输入和输出处理程序goroutine完成，停顿处理程序就可以退出。
 			if ioStopped {
 				break out
 			}
@@ -1356,6 +1577,7 @@ out:
 		case <-p.outQuit:
 			// The stall handler can exit once both the input and
 			// output handler goroutines are done.
+			//一旦输入和输出处理程序goroutine完成，停顿处理程序就可以退出。
 			if ioStopped {
 				break out
 			}
@@ -1365,6 +1587,7 @@ out:
 
 	// Drain any wait channels before going away so there is nothing left
 	// waiting on this goroutine.
+	//在离开之前排空任何等待通道，这样就没有什么可以等待这个goroutine了。
 cleanup:
 	for {
 		select {
@@ -1393,12 +1616,15 @@ out:
 		// Read a message and stop the idle timer as soon as the read
 		// is done.  The timer is reset below for the next iteration if
 		// needed.
+		//读取完成后立即读取消息并停止空闲计时器。 如果需要，定时器将在下面重置以进行下一次迭代。
 		rmsg, buf, err := p.readMessage(p.wireEncoding)
 		idleTimer.Stop()
 		if err != nil {
 			// In order to allow regression tests with malformed messages, don't
 			// disconnect the peer when we're in regression test mode and the
 			// error is one of the allowed errors.
+			//为了允许使用格式错误的消息进行回归测试，
+			//请不要在我们处于回归测试模式时断开节点，并且错误是允许的错误之一。
 			if p.isAllowedReadError(err) {
 				log.Errorf("Allowed test error from %s: %v", p, err)
 				idleTimer.Reset(idleTimeout)
@@ -1408,6 +1634,7 @@ out:
 			// Only log the error and send reject message if the
 			// local peer is not forcibly disconnecting and the
 			// remote peer has not disconnected.
+			//如果本地节点未强制断开连接且远程节点未断开连接，则仅记录错误并发送拒绝消息。
 			if p.shouldHandleReadError(err) {
 				errMsg := fmt.Sprintf("Can't read message from %s: %v", p, err)
 				if err != io.ErrUnexpectedEOF {
@@ -1421,6 +1648,10 @@ out:
 				// at least that much of the message was valid, but that is not
 				// currently exposed by wire, so just used malformed for the
 				// command.
+				//针对格式错误的消息推送拒绝消息，并在断开连接之前等待消息发送。
+				//
+				//注意：理想情况下，如果至少消息的大部分是有效的，那么这将包括头部中的命令，
+				但是当前没有通过线路暴露，因此只是对命令使用了格式错误。
 				p.PushRejectMsg("malformed", wire.RejectMalformed, errMsg, nil,
 					true)
 			}
@@ -1442,6 +1673,7 @@ out:
 
 			// No read lock is necessary because verAckReceived is not written
 			// to in any other goroutine.
+			//不需要读取锁定，因为verAckReceived不会写入任何其他goroutine。
 			if p.verAckReceived {
 				log.Infof("Already received 'verack' from peer %v -- "+
 					"disconnecting", p)
@@ -1632,6 +1864,11 @@ func (p *Peer) queueHandler() {
 	// message's done channel.  To avoid such confusion we keep a different
 	// flag and pendingMsgs only contains messages that we have not yet
 	// passed to outHandler.
+	//我们保留等待标志，以便我们知道是否有一个排队到outHandler的消息。
+	// 我们可以使用列表头部的存在，但后来我们对它是否已经在清理时间得到它有相当的关注
+	// - 因此谁发送了消息的完成通道。
+	// 为了避免这种混淆，我们保留一个不同的标志，
+	// pendingMsgs只包含我们尚未传递给outHandler的消息。
 	waiting := false
 
 	// To avoid duplication below.
@@ -1757,8 +1994,11 @@ cleanup:
 // shouldLogWriteError returns whether or not the passed error, which is
 // expected to have come from writing to the remote peer in the outHandler,
 // should be logged.
+// shouldLogWriteError返回是否应记录传递的错误，
+// 该错误应该是从写入outHandler中的远程节点获得的。
 func (p *Peer) shouldLogWriteError(err error) bool {
 	// No logging when the peer is being forcibly disconnected.
+	//强制断开节点时没有记录。
 	if atomic.LoadInt32(&p.disconnect) != 0 {
 		return false
 	}
@@ -1878,6 +2118,9 @@ out:
 // QueueMessage adds the passed bitcoin message to the peer send queue.
 //
 // This function is safe for concurrent access.
+// QueueMessage将传递的比特币消息添加到节点发送队列。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) QueueMessage(msg wire.Message, doneChan chan<- struct{}) {
 	p.QueueMessageWithEncoding(msg, doneChan, wire.BaseEncoding)
 }
@@ -1888,12 +2131,18 @@ func (p *Peer) QueueMessage(msg wire.Message, doneChan chan<- struct{}) {
 // encoding/decoding blocks and transactions.
 //
 // This function is safe for concurrent access.
+// QueueMessageWithEncoding将传递的比特币消息添加到节点发送队列。
+// 此函数与QueueMessage相同，但它允许调用者指定在编码/解码块和事务时应使用的线编码类型。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) QueueMessageWithEncoding(msg wire.Message, doneChan chan<- struct{},
 	encoding wire.MessageEncoding) {
 
 	// Avoid risk of deadlock if goroutine already exited.  The goroutine
 	// we will be sending to hangs around until it knows for a fact that
 	// it is marked as disconnected and *then* it drains the channels.
+	//如果goroutine已经退出，请避免死锁的风险。 我们将发送的goroutine挂起，
+	//直到它知道它被标记为断开连接然后*然后*它消耗通道。
 	if !p.Connected() {
 		if doneChan != nil {
 			go func() {
@@ -1910,9 +2159,15 @@ func (p *Peer) QueueMessageWithEncoding(msg wire.Message, doneChan chan<- struct
 // Inventory that the peer is already known to have is ignored.
 //
 // This function is safe for concurrent access.
+// QueueInventory将传递的库存添加到库存发送队列中，该库存可能不会立即发送，而是分批流向同级。
+//忽略节点已知的库存。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) QueueInventory(invVect *wire.InvVect) {
 	// Don't add the inventory to the send queue if the peer is already
 	// known to have it.
+	//如果节点已经存在，请不要将库存添加到发送队列
+	//知道拥有它
 	if p.knownInventory.Exists(invVect) {
 		return
 	}
@@ -1930,6 +2185,9 @@ func (p *Peer) QueueInventory(invVect *wire.InvVect) {
 // Connected returns whether or not the peer is currently connected.
 //
 // This function is safe for concurrent access.
+// Connected返回节点当前是否已连接。
+//
+//此函数对于并发访问是安全的。
 func (p *Peer) Connected() bool {
 	return atomic.LoadInt32(&p.connected) != 0 &&
 		atomic.LoadInt32(&p.disconnect) == 0
@@ -1938,6 +2196,8 @@ func (p *Peer) Connected() bool {
 // Disconnect disconnects the peer by closing the connection.  Calling this
 // function when the peer is already disconnected or in the process of
 // disconnecting will have no effect.
+// Disconnect通过关闭连接来断开节点的连接。 在节点已经断开连接或正在进行的过程中调用此函数
+//断开连接将无效。
 func (p *Peer) Disconnect() {
 	if atomic.AddInt32(&p.disconnect, 1) != 1 {
 		return
@@ -1953,6 +2213,8 @@ func (p *Peer) Disconnect() {
 // readRemoteVersionMsg waits for the next message to arrive from the remote
 // peer.  If the next message is not a version message or the version is not
 // acceptable then return an error.
+// readRemoteVersionMsg等待从远程节点到达的下一条消息。
+// 如果下一条消息不是版本消息或版本不可接受，则返回错误。
 func (p *Peer) readRemoteVersionMsg() error {
 	// Read their version message.
 	remoteMsg, _, err := p.readMessage(wire.LatestEncoding)
@@ -2049,6 +2311,7 @@ func (p *Peer) readRemoteVersionMsg() error {
 
 // localVersionMsg creates a version message that can be used to send to the
 // remote peer.
+// localVersionMsg创建可用于发送到远程节点的版本消息。
 func (p *Peer) localVersionMsg() (*wire.MsgVersion, error) {
 	var blockNum int32
 	if p.cfg.NewestBlock != nil {
@@ -2064,6 +2327,8 @@ func (p *Peer) localVersionMsg() (*wire.MsgVersion, error) {
 	// If we are behind a proxy and the connection comes from the proxy then
 	// we return an unroutable address as their address. This is to prevent
 	// leaking the tor proxy address.
+	//如果我们在代理后面并且连接来自代理，那么我们返回一个不可路由的地址作为他们的地址。
+	// 这是为了防止泄漏代理地址。
 	if p.cfg.Proxy != "" {
 		proxyaddress, _, err := net.SplitHostPort(p.cfg.Proxy)
 		// invalid proxy means poorly configured, be on the safe side.
@@ -2082,6 +2347,12 @@ func (p *Peer) localVersionMsg() (*wire.MsgVersion, error) {
 	// accepted inbound connections.
 	//
 	// Also, the timestamp is unused in the version message.
+	//创建一个wire.NetAddress，只设置用作版本消息中“addrme”的服务。
+	//
+	//较旧的节点先前已将IP和端口信息添加到地址管理器，这被证明是不可靠的，
+	//因为来自节点的入站连接并不一定意味着节点本身接受入站连接。
+	//
+	//此外，版本消息中未使用时间戳。
 	ourNA := &wire.NetAddress{
 		Services: p.cfg.Services,
 	}
@@ -2089,6 +2360,8 @@ func (p *Peer) localVersionMsg() (*wire.MsgVersion, error) {
 	// Generate a unique nonce for this peer so self connections can be
 	// detected.  This is accomplished by adding it to a size-limited map of
 	// recently seen nonces.
+	//为此节点生成唯一的随机数，以便可以检测到自身连接。
+	// 这是通过将其添加到最近看到的随机数的大小有限的地图来实现的。
 	nonce := uint64(rand.Int63())
 	sentNonces.Add(nonce)
 
@@ -2110,6 +2383,7 @@ func (p *Peer) localVersionMsg() (*wire.MsgVersion, error) {
 }
 
 // writeLocalVersionMsg writes our version message to the remote peer.
+// writeLocalVersionMsg将我们的版本消息写入远程节点。
 func (p *Peer) writeLocalVersionMsg() error {
 	localVerMsg, err := p.localVersionMsg()
 	if err != nil {
@@ -2122,6 +2396,8 @@ func (p *Peer) writeLocalVersionMsg() error {
 // negotiateInboundProtocol waits to receive a version message from the peer
 // then sends our version message. If the events do not occur in that order then
 // it returns an error.
+// negotiateInboundProtocol等待从节点接收版本消息然后发送我们的版本消息。
+// 如果事件不按该顺序发生，则返回错误。
 func (p *Peer) negotiateInboundProtocol() error {
 	if err := p.readRemoteVersionMsg(); err != nil {
 		return err
@@ -2133,6 +2409,8 @@ func (p *Peer) negotiateInboundProtocol() error {
 // negotiateOutboundProtocol sends our version message then waits to receive a
 // version message from the peer.  If the events do not occur in that order then
 // it returns an error.
+// negotiateOutboundProtocol发送我们的版本消息，然后等待从节点接收版本消息。
+// 如果事件不按该顺序发生，则返回错误。
 func (p *Peer) negotiateOutboundProtocol() error {
 	if err := p.writeLocalVersionMsg(); err != nil {
 		return err
@@ -2142,6 +2420,7 @@ func (p *Peer) negotiateOutboundProtocol() error {
 }
 
 // start begins processing input and output messages.
+//start 处理输入和输出消息。
 func (p *Peer) start() error {
 	log.Tracef("Starting peer %s", p)
 
@@ -2188,6 +2467,7 @@ func (p *Peer) start() error {
 
 // AssociateConnection associates the given conn to the peer.   Calling this
 // function when the peer is already connected will have no effect.
+// AssociateConnection将给定的conn与节点关联。 当节点已经连接时调用此功能将不起作用。
 func (p *Peer) AssociateConnection(conn net.Conn) {
 	// Already connected?
 	if !atomic.CompareAndSwapInt32(&p.connected, 0, 1) {
@@ -2224,6 +2504,8 @@ func (p *Peer) AssociateConnection(conn net.Conn) {
 // resources are cleaned up.  This will happen if either the local or remote
 // side has been disconnected or the peer is forcibly disconnected via
 // Disconnect.
+// WaitForDisconnect等待，直到节点完全断开连接并清除所有资源。
+// 如果本地或远程端已断开连接或通过断开连接强制断开节点端，则会发生这种情况。
 func (p *Peer) WaitForDisconnect() {
 	<-p.quit
 }
@@ -2231,9 +2513,12 @@ func (p *Peer) WaitForDisconnect() {
 // newPeerBase returns a new base bitcoin peer based on the inbound flag.  This
 // is used by the NewInboundPeer and NewOutboundPeer functions to perform base
 // setup needed by both types of peers.
+// newPeerBase根据入站标志返回一个新的基本比特币节点。
+// NewInboundPeer和NewOutboundPeer函数使用它来执行两种类型的节点所需的基本设置。
 func newPeerBase(origCfg *Config, inbound bool) *Peer {
 	// Default to the max supported protocol version if not specified by the
 	// caller.
+	//如果调用者未指定，则默认为支持的最大协议版本。
 	cfg := *origCfg // Copy to avoid mutating caller.
 	if cfg.ProtocolVersion == 0 {
 		cfg.ProtocolVersion = MaxProtocolVersion
@@ -2271,11 +2556,13 @@ func newPeerBase(origCfg *Config, inbound bool) *Peer {
 
 // NewInboundPeer returns a new inbound bitcoin peer. Use Start to begin
 // processing incoming and outgoing messages.
+// NewInboundPeer返回一个新的入站比特币节点。 使用“开始”开始处理传入和传出消息。
 func NewInboundPeer(cfg *Config) *Peer {
 	return newPeerBase(cfg, true)
 }
 
 // NewOutboundPeer returns a new outbound bitcoin peer.
+// NewOutboundPeer返回一个新的出站比特币节点。
 func NewOutboundPeer(cfg *Config, addr string) (*Peer, error) {
 	p := newPeerBase(cfg, false)
 	p.addr = addr
