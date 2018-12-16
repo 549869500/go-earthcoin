@@ -1150,20 +1150,19 @@ func (sm *SyncManager) limitMap(m map[chainhash.Hash]struct{}, limit int) {
 // single thread without needing to lock memory data structures.  This is
 // important because the sync manager controls which blocks are needed and how
 // the fetching should proceed.
-// blockHandler是同步管理器的主要处理程序。 它必须作为协程运行。 
+// blockHandler是同步管理器的主要处理程序。 它必须作为协程运行。
 // 它在来自对等处理程序的单独协程中处理块和inv消息，
-// 因此块（MsgBlock）消息由单个线程处理，而无需锁定内存数据结构。 
+// 因此块（MsgBlock）消息由单个线程处理，而无需锁定内存数据结构。
 // 这很重要，因为同步管理器控制需要哪些块以及如何进行提取。
 
-
- // 1. handleTxMsg 处理交易入口
- // 2. 检测该交易Hash是否已经存在于交易池或者孤立池
- // 3. 检查交易大小金额是否正确
- // 4. 检查是否有双花
- // 5. 检查交易输入是否有效、签名等
- // 6. 策略过滤
- // 7. 将交易封装加入到交易池，更新lastUpdate
- // 8.如果输入不存在，则进入孤立交易处理流程
+// 1. handleTxMsg 处理交易入口
+// 2. 检测该交易Hash是否已经存在于交易池或者孤立池
+// 3. 检查交易大小金额是否正确
+// 4. 检查是否有双花
+// 5. 检查交易输入是否有效、签名等
+// 6. 策略过滤
+// 7. 将交易封装加入到交易池，更新lastUpdate
+// 8.如果输入不存在，则进入孤立交易处理流程
 
 func (sm *SyncManager) blockHandler() {
 out:
