@@ -25,39 +25,63 @@ const (
 	// minInFlightBlocks is the minimum number of blocks that should be
 	// in the request queue for headers-first mode before requesting
 	// more.
+	// minInFlightBlocks是请求更多之前应该在header-first模式的请求队列中的最小块数。
 	minInFlightBlocks = 10
 
 	// maxRejectedTxns is the maximum number of rejected transactions
 	// hashes to store in memory.
+	// maxRejectedTxns是要存储在内存中的最大拒绝事务哈希值。
 	maxRejectedTxns = 1000
 
 	// maxRequestedBlocks is the maximum number of requested block
 	// hashes to store in memory.
+	// maxRequestedBlocks是要存储在内存中的最大请求块哈希值。
 	maxRequestedBlocks = wire.MaxInvPerMsg
 
 	// maxRequestedTxns is the maximum number of requested transactions
 	// hashes to store in memory.
+	// maxRequestedTxns是要存储在内存中的最大请求事务哈希值。
 	maxRequestedTxns = wire.MaxInvPerMsg
 )
 
 // zeroHash is the zero value hash (all zeros).  It is defined as a convenience.
+// zeroHash是零值哈希（全为零）。 它被定义为一种便利。
 var zeroHash chainhash.Hash
 
 // newPeerMsg signifies a newly connected peer to the block handler.
+// newPeerMsg表示新连接的节点到块处理程序。
 type newPeerMsg struct {
 	peer *peerpkg.Peer
 }
 
 // blockMsg packages a bitcoin block message and the peer it came from together
 // so the block handler has access to that information.
+// blockMsg打包比特币块消息和它来自的节点，因此块处理程序可以访问该信息。
 type blockMsg struct {
 	block *btcutil.Block
 	peer  *peerpkg.Peer
 	reply chan struct{}
 }
 
+// // Block defines a bitcoin block that provides easier and more efficient
+// // manipulation of raw blocks.  It also memoizes hashes for the block and its
+// // transactions on their first access so subsequent accesses don't have to
+// // repeat the relatively expensive hashing operations.
+// //块定义了一个比特币块，可以更方便，更有效地处理原始块。
+// // 它还会在第一次访问时记忆块及其事务的哈希值，因此后续访问不必重复相对昂贵的哈希操作。
+// type Block struct {
+// 	msgBlock                 *wire.MsgBlock  // Underlying MsgBlock
+// 	serializedBlock          []byte          // Serialized bytes for the block
+// 	serializedBlockNoWitness []byte          // Serialized bytes for block w/o witness data
+// 	blockHash                *chainhash.Hash // Cached block hash
+// 	blockHeight              int32           // Height in the main block chain
+// 	transactions             []*Tx           // Transactions
+// 	txnsGenerated            bool            // ALL wrapped transactions generated
+// }
+
 // invMsg packages a bitcoin inv message and the peer it came from together
 // so the block handler has access to that information.
+// invMsg打包比特币inv消息和它来自的节点，因此块处理程序可以访问该信息。
 type invMsg struct {
 	inv  *wire.MsgInv
 	peer *peerpkg.Peer
@@ -65,18 +89,21 @@ type invMsg struct {
 
 // headersMsg packages a bitcoin headers message and the peer it came from
 // together so the block handler has access to that information.
+// headersMsg打包比特币标题消息和它来自的节点，因此块处理程序可以访问该信息。
 type headersMsg struct {
 	headers *wire.MsgHeaders
 	peer    *peerpkg.Peer
 }
 
 // donePeerMsg signifies a newly disconnected peer to the block handler.
+// donePeerMsg表示新的断开连接的节点到块处理程序。
 type donePeerMsg struct {
 	peer *peerpkg.Peer
 }
 
 // txMsg packages a bitcoin tx message and the peer it came from together
 // so the block handler has access to that information.
+// txMsg打包比特币tx消息和它来自的节点，因此块处理程序可以访问该信息。
 type txMsg struct {
 	tx    *btcutil.Tx
 	peer  *peerpkg.Peer
@@ -85,12 +112,14 @@ type txMsg struct {
 
 // getSyncPeerMsg is a message type to be sent across the message channel for
 // retrieving the current sync peer.
+// getSyncPeerMsg是要通过消息通道发送的消息类型，用于检索当前的同步节点。
 type getSyncPeerMsg struct {
 	reply chan int32
 }
 
 // processBlockResponse is a response sent to the reply channel of a
 // processBlockMsg.
+// processBlockResponse是发送到processBlockMsg的回复通道的响应。
 type processBlockResponse struct {
 	isOrphan bool
 	err      error
@@ -101,6 +130,10 @@ type processBlockResponse struct {
 // above in that blockMsg is intended for blocks that came from peers and have
 // extra handling whereas this message essentially is just a concurrent safe
 // way to call ProcessBlock on the internal block chain instance.
+// processBlockMsg是要通过消息通道发送的消息类型，用于处理所请求的块。
+// 请注意，此调用与上面的blockMsg的不同之处在于，blockMsg适用于来自节点并具有额外处理的块，
+// 而此消息本质上只是在内部块链实例上调用ProcessBlock的并发安全方式。
+
 type processBlockMsg struct {
 	block *btcutil.Block
 	flags blockchain.BehaviorFlags
@@ -110,6 +143,8 @@ type processBlockMsg struct {
 // isCurrentMsg is a message type to be sent across the message channel for
 // requesting whether or not the sync manager believes it is synced with the
 // currently connected peers.
+// isCurrentMsg是要通过消息通道发送的消息类型，
+// 用于请求同步管理器是否认为它与当前连接的节点同步。
 type isCurrentMsg struct {
 	reply chan bool
 }
@@ -118,12 +153,15 @@ type isCurrentMsg struct {
 // pausing the sync manager.  This effectively provides the caller with
 // exclusive access over the manager until a receive is performed on the
 // unpause channel.
+// pauseMsg是要通过消息通道发送的消息类型，用于暂停同步管理器。
+// 这有效地为呼叫者提供对管理器的独占访问，直到在非暂停通道上执行接收。
 type pauseMsg struct {
 	unpause <-chan struct{}
 }
 
 // headerNode is used as a node in a list of headers that are linked together
 // between checkpoints.
+// headerNode用作检查点之间链接在一起的标头列表中的节点。
 type headerNode struct {
 	height int32
 	hash   *chainhash.Hash
@@ -131,6 +169,7 @@ type headerNode struct {
 
 // peerSyncState stores additional information that the SyncManager tracks
 // about a peer.
+// peerSyncState存储SyncManager跟踪节点的其他信息。
 type peerSyncState struct {
 	syncCandidate   bool
 	requestQueue    []*wire.InvVect
@@ -143,6 +182,10 @@ type peerSyncState struct {
 // it selects peers to sync from and starts the initial block download. Once the
 // chain is in sync, the SyncManager handles incoming block and header
 // notifications and relays announcements of new blocks to peers.
+// SyncManager用于与节点传递与块相关的消息。
+// 通过在goroutine中执行Start（）来启动SyncManager。
+// 一旦启动，它将选择要同步的节点并开始初始块下载。
+// 一旦链条同步，SyncManager就会处理传入的块和标头通知，并将新块的公告转发给节点。
 type SyncManager struct {
 	peerNotifier   PeerNotifier
 	started        int32
@@ -156,6 +199,7 @@ type SyncManager struct {
 	quit           chan struct{}
 
 	// These fields should only be accessed from the blockHandler thread
+	//只能从blockHandler线程访问这些字段
 	rejectedTxns    map[chainhash.Hash]struct{}
 	requestedTxns   map[chainhash.Hash]struct{}
 	requestedBlocks map[chainhash.Hash]struct{}
@@ -163,17 +207,20 @@ type SyncManager struct {
 	peerStates      map[*peerpkg.Peer]*peerSyncState
 
 	// The following fields are used for headers-first mode.
+	//以下字段用于标头优先模式。
 	headersFirstMode bool
 	headerList       *list.List
 	startHeader      *list.Element
 	nextCheckpoint   *chaincfg.Checkpoint
 
 	// An optional fee estimator.
+	//可选的费用估算器。
 	feeEstimator *mempool.FeeEstimator
 }
 
 // resetHeaderState sets the headers-first mode state to values appropriate for
 // syncing from a new peer.
+// resetHeaderState将headers-first模式状态设置为适合于从新节点同步的值。
 func (sm *SyncManager) resetHeaderState(newestHash *chainhash.Hash, newestHeight int32) {
 	sm.headersFirstMode = false
 	sm.headerList.Init()
@@ -182,6 +229,7 @@ func (sm *SyncManager) resetHeaderState(newestHash *chainhash.Hash, newestHeight
 	// When there is a next checkpoint, add an entry for the latest known
 	// block into the header pool.  This allows the next downloaded header
 	// to prove it links to the chain properly.
+	//当有下一个检查点时，将最新已知块的条目添加到标题池中。 这允许下一个下载的标头证明它正确链接到链。
 	if sm.nextCheckpoint != nil {
 		node := headerNode{height: newestHeight, hash: newestHash}
 		sm.headerList.PushBack(&node)
@@ -192,6 +240,8 @@ func (sm *SyncManager) resetHeaderState(newestHash *chainhash.Hash, newestHeight
 // It returns nil when there is not one either because the height is already
 // later than the final checkpoint or some other reason such as disabled
 // checkpoints.
+// findNextHeaderCheckpoint返回传递高度后的下一个检查点。
+//当没有一个因为高度已经晚于最终检查点或其他原因（如禁用的检查点）时，它返回nil。
 func (sm *SyncManager) findNextHeaderCheckpoint(height int32) *chaincfg.Checkpoint {
 	checkpoints := sm.chain.Checkpoints()
 	if len(checkpoints) == 0 {
@@ -200,6 +250,7 @@ func (sm *SyncManager) findNextHeaderCheckpoint(height int32) *chaincfg.Checkpoi
 
 	// There is no next checkpoint if the height is already after the final
 	// checkpoint.
+	//如果高度已经在最终检查点之后，则没有下一个检查点。
 	finalCheckpoint := &checkpoints[len(checkpoints)-1]
 	if height >= finalCheckpoint.Height {
 		return nil
@@ -220,8 +271,11 @@ func (sm *SyncManager) findNextHeaderCheckpoint(height int32) *chaincfg.Checkpoi
 // download/sync the blockchain from.  When syncing is already running, it
 // simply returns.  It also examines the candidates for any which are no longer
 // candidates and removes them as needed.
+// startSync将从可用的候选节点中选择最佳节点来下载/同步块链。
+// 当同步已经在运行时，它只是返回。 它还审查任何不再候选的候选人，并根据需要将其删除。
 func (sm *SyncManager) startSync() {
 	// Return now if we're already syncing.
+	//如果我们已经在同步，请立即返回。
 	if sm.syncPeer != nil {
 		return
 	}
@@ -229,6 +283,7 @@ func (sm *SyncManager) startSync() {
 	// Once the segwit soft-fork package has activated, we only
 	// want to sync from peers which are witness enabled to ensure
 	// that we fully validate all blockchain data.
+	//一旦segwit软叉包被激活，我们只想从已启用见证的节点同步，以确保我们完全验证所有区块链数据。
 	segwitActive, err := sm.chain.IsDeploymentActive(chaincfg.DeploymentSegwit)
 	if err != nil {
 		log.Errorf("Unable to query for segwit soft-fork state: %v", err)
@@ -253,6 +308,9 @@ func (sm *SyncManager) startSync() {
 		// doesn't have a later block when it's equal, it will likely
 		// have one soon so it is a reasonable choice.  It also allows
 		// the case where both are at 0 such as during regression test.
+		//删除由于传递最新已知块而不再是候选对象的同步候选节点项。
+		// 注意：<是故意的而不是<=。 虽然技术上节点在相同的情况下没有后来的块，
+		//但它很快就会有一个，所以它是一个合理的选择。 它还允许两者都处于0的情况，例如在回归测试期间。
 		if peer.LastBlock() < best.Height {
 			state.syncCandidate = false
 			continue
@@ -297,6 +355,16 @@ func (sm *SyncManager) startSync() {
 		// and fully validate them.  Finally, regression test mode does
 		// not support the headers-first approach so do normal block
 		// downloads when in regression test mode.
+		// 当当前高度小于已知检查点时，
+		// 我们可以使用块头来了解哪些块包含到检查点的链并对它们执行较少的验证。
+		// 这是可能的，因为每个头包含前一个头的哈希和一个merkle根。
+		// 因此，如果我们正确地验证所有收到的标题链接并且检查点哈希值匹配，
+		// 我们可以确定其间的块的哈希值是准确的。
+		// 此外，一旦下载了完整的块，就计算出merkle根，并将其与标题中的值进行比较，
+		// 这证明了整个块没有被篡改。
+		//
+		//一旦我们通过了最终检查点，或者禁用了检查点，请使用标准的inv消息来了解这些块并完全验证它们。
+		// 最后，回归测试模式不支持header-first方法，因此在回归测试模式下执行正常的块下载。
 		if sm.nextCheckpoint != nil &&
 			best.Height < sm.nextCheckpoint.Height &&
 			sm.chainParams != &chaincfg.RegressionNetParams {
@@ -317,13 +385,17 @@ func (sm *SyncManager) startSync() {
 
 // isSyncCandidate returns whether or not the peer is a candidate to consider
 // syncing from.
+// isSyncCandidate返回节点是否是考虑同步的候选对象。
 func (sm *SyncManager) isSyncCandidate(peer *peerpkg.Peer) bool {
 	// Typically a peer is not a candidate for sync if it's not a full node,
 	// however regression test is special in that the regression tool is
 	// not a full node and still needs to be considered a sync candidate.
+	// 通常，如果节点不是完整节点，则它不是同步候选者，
+	// 但是回归测试的特殊之处在于回归工具不是完整节点，仍然需要被视为同步候选者。
 	if sm.chainParams == &chaincfg.RegressionNetParams {
 		// The peer is not a candidate if it's not coming from localhost
 		// or the hostname can't be determined for some reason.
+		//如果节点不是来自localhost，或者由于某种原因无法确定主机名，则该节点不是候选对象。
 		host, _, err := net.SplitHostPort(peer.Addr())
 		if err != nil {
 			return false
@@ -336,6 +408,8 @@ func (sm *SyncManager) isSyncCandidate(peer *peerpkg.Peer) bool {
 		// The peer is not a candidate for sync if it's not a full
 		// node. Additionally, if the segwit soft-fork package has
 		// activated, then the peer must also be upgraded.
+		// 如果节点不是完整节点，则它不是同步的候选对象。
+		// 此外，如果segwit软叉包已激活，则还必须升级节点。
 		segwitActive, err := sm.chain.IsDeploymentActive(chaincfg.DeploymentSegwit)
 		if err != nil {
 			log.Errorf("Unable to query for segwit "+
@@ -349,14 +423,18 @@ func (sm *SyncManager) isSyncCandidate(peer *peerpkg.Peer) bool {
 	}
 
 	// Candidate if all checks passed.
+	//如果所有检查都通过，则为候选人。
 	return true
 }
 
 // handleNewPeerMsg deals with new peers that have signalled they may
 // be considered as a sync peer (they have already successfully negotiated).  It
 // also starts syncing if needed.  It is invoked from the syncHandler goroutine.
+// handleNewPeerMsg处理已表示可能被视为同步节点的新节点（它们已经成功协商）。
+// 如果需要，它也会开始同步。 它是从syncHandler goroutine调用的。
 func (sm *SyncManager) handleNewPeerMsg(peer *peerpkg.Peer) {
 	// Ignore if in the process of shutting down.
+	//如果在关机过程中忽略。
 	if atomic.LoadInt32(&sm.shutdown) != 0 {
 		return
 	}
@@ -372,6 +450,7 @@ func (sm *SyncManager) handleNewPeerMsg(peer *peerpkg.Peer) {
 	}
 
 	// Start syncing by choosing the best candidate if needed.
+	//如果需要，选择最佳候选人开始同步。
 	if isSyncCandidate && sm.syncPeer == nil {
 		sm.startSync()
 	}
@@ -381,6 +460,9 @@ func (sm *SyncManager) handleNewPeerMsg(peer *peerpkg.Peer) {
 // removes the peer as a candidate for syncing and in the case where it was
 // the current sync peer, attempts to select a new best peer to sync from.  It
 // is invoked from the syncHandler goroutine.
+// handleDonePeerMsg处理已表示已完成的节点。
+// 它将节点移除为同步的候选者，并且在它是当前同步节点的情况下，
+// 尝试选择要从中同步的新的最佳节点。 它是从syncHandler goroutine调用的。
 func (sm *SyncManager) handleDonePeerMsg(peer *peerpkg.Peer) {
 	state, exists := sm.peerStates[peer]
 	if !exists {
@@ -395,6 +477,7 @@ func (sm *SyncManager) handleDonePeerMsg(peer *peerpkg.Peer) {
 
 	// Remove requested transactions from the global map so that they will
 	// be fetched from elsewhere next time we get an inv.
+	//从全局地图中删除请求的事务，以便下次获取inv时从其他地方获取它们。
 	for txHash := range state.requestedTxns {
 		delete(sm.requestedTxns, txHash)
 	}
@@ -403,6 +486,8 @@ func (sm *SyncManager) handleDonePeerMsg(peer *peerpkg.Peer) {
 	// fetched from elsewhere next time we get an inv.
 	// TODO: we could possibly here check which peers have these blocks
 	// and request them now to speed things up a little.
+	//  从全局地图中删除请求的块，以便下次获取inv时从其他地方获取它们。
+	// TODO：我们可以在这里检查哪些节点有这些块并立即请求它们以加快速度。
 	for blockHash := range state.requestedBlocks {
 		delete(sm.requestedBlocks, blockHash)
 	}
@@ -438,11 +523,16 @@ func (sm *SyncManager) handleTxMsg(tmsg *txMsg) {
 	// spec to proliferate.  While this is not ideal, there is no check here
 	// to disconnect peers for sending unsolicited transactions to provide
 	// interoperability.
+	//注意：BitcoinJ，可能还有其他钱包，不遵循发送清单消息的规范，
+	//并允许远程节点决定是否要通过getdata消息请求交易。
+	// 不幸的是，参考实现允许未经请求的数据，因此它允许不遵循规范的钱包扩散。
+	// 虽然这并不理想，但此处不会检查是否断开节点以发送未经请求的事务以提供互操作性。
 	txHash := tmsg.tx.Hash()
 
 	// Ignore transactions that we have already rejected.  Do not
 	// send a reject message here because if the transaction was already
 	// rejected, the transaction was unsolicited.
+	//忽略我们已拒绝的交易。 不要在此处发送拒绝消息，因为如果交易已被拒绝，则该交易是未经请求的。
 	if _, exists = sm.rejectedTxns[*txHash]; exists {
 		log.Debugf("Ignoring unsolicited previously rejected "+
 			"transaction %v from %s", txHash, peer)
@@ -458,6 +548,8 @@ func (sm *SyncManager) handleTxMsg(tmsg *txMsg) {
 	// already knows about it and as such we shouldn't have any more
 	// instances of trying to fetch it, or we failed to insert and thus
 	// we'll retry next time we get an inv.
+	//从请求映射中删除事务。 要么mempool / chain已经知道了它，
+	//因此我们不应再有任何尝试获取它的实例，或者我们没有插入，因此我们将在下次获取inv时重试。
 	delete(state.requestedTxns, *txHash)
 	delete(sm.requestedTxns, *txHash)
 
@@ -471,6 +563,8 @@ func (sm *SyncManager) handleTxMsg(tmsg *txMsg) {
 		// simply rejected as opposed to something actually going wrong,
 		// so log it as such.  Otherwise, something really did go wrong,
 		// so log it as an actual error.
+		// 当错误是规则错误时，这意味着事务被简单地拒绝而不是实际出错的事情，
+		// 因此请将其记录下来。 否则，确实出错了，所以请将其记录为实际错误。
 		if _, ok := err.(mempool.RuleError); ok {
 			log.Debugf("Rejected transaction %v from %s: %v",
 				txHash, peer, err)
@@ -491,6 +585,7 @@ func (sm *SyncManager) handleTxMsg(tmsg *txMsg) {
 
 // current returns true if we believe we are synced with our peers, false if we
 // still have blocks to check
+//如果我们认为我们与同伴同步，则current返回true，如果我们仍然有块检查则返回false
 func (sm *SyncManager) current() bool {
 	if !sm.chain.IsCurrent() {
 		return false
@@ -511,6 +606,7 @@ func (sm *SyncManager) current() bool {
 }
 
 // handleBlockMsg handles block messages from all peers.
+// handleBlockMsg处理来自所有节点的阻止消息。
 func (sm *SyncManager) handleBlockMsg(bmsg *blockMsg) {
 	peer := bmsg.peer
 	state, exists := sm.peerStates[peer]
@@ -527,6 +623,9 @@ func (sm *SyncManager) handleBlockMsg(bmsg *blockMsg) {
 		// the peer or ignore the block when we're in regression test
 		// mode in this case so the chain code is actually fed the
 		// duplicate blocks.
+		//回归测试有意地发送一些块两次以测试重复块插入失败。
+		// 在这种情况下，当我们处于回归测试模式时，不要断开节点或忽略块，
+		//因此链码实际上是复制块。
 		if sm.chainParams != &chaincfg.RegressionNetParams {
 			log.Warnf("Got unrequested block %v from %s -- "+
 				"disconnecting", blockHash, peer.Addr())
@@ -542,6 +641,9 @@ func (sm *SyncManager) handleBlockMsg(bmsg *blockMsg) {
 	// Also, remove the list entry for all blocks except the checkpoint
 	// since it is needed to verify the next round of headers links
 	// properly.
+	// 当处于标头优先模式时，如果该块与正在提取的标头列表中的第一个标头的哈希匹配，
+	// 则它有资格进行较少的验证，因为标头已经过验证以链接在一起并且有效至下一个检查站。
+	// 此外，删除除检查点之外的所有块的列表条目，因为需要正确验证下一轮标题链接。
 	isCheckpointBlock := false
 	behaviorFlags := blockchain.BFNone
 	if sm.headersFirstMode {
@@ -562,6 +664,8 @@ func (sm *SyncManager) handleBlockMsg(bmsg *blockMsg) {
 	// Remove block from request maps. Either chain will know about it and
 	// so we shouldn't have any more instances of trying to fetch it, or we
 	// will fail the insert and thus we'll retry next time we get an inv.
+	//从请求映射中删除块。 任何一个链都会知道它，因此我们不应再有任何尝试获取它的实例，
+	// 否则我们将失败插入，因此我们将在下次获取inv时重试。
 	delete(state.requestedBlocks, *blockHash)
 	delete(sm.requestedBlocks, *blockHash)
 
@@ -573,6 +677,8 @@ func (sm *SyncManager) handleBlockMsg(bmsg *blockMsg) {
 		// rejected as opposed to something actually going wrong, so log
 		// it as such.  Otherwise, something really did go wrong, so log
 		// it as an actual error.
+		// 当错误是规则错误时，这意味着该块被简单地拒绝而不是实际出错的地方，
+		// 因此请将其记录下来。 否则，确实出错了，所以请将其记录为实际错误。
 		if _, ok := err.(blockchain.RuleError); ok {
 			log.Infof("Rejected block %v from %s: %v", blockHash,
 				peer, err)
@@ -601,6 +707,11 @@ func (sm *SyncManager) handleBlockMsg(bmsg *blockMsg) {
 	// the block heights over other peers who's invs may have been ignored
 	// if we are actively syncing while the chain is not yet current or
 	// who may have lost the lock announcment race.
+	// 有关此节点报告的新块的元数据。
+	// 我们使用下面的内容根据最后公布的块哈希更新此节点的最新块高度和其他节点的高度。
+	// 这允许我们动态更新节点的块高度，在寻找新的同步节点时避免过时的高度。
+	// 一旦接受了一个块或识别孤儿，我们也会使用这些信息来更新其他同伴的块高度，
+	// 如果我们正在进行同步而链条尚未生效或者可能已经失去锁定公告，则可能已被忽略种族。
 	var heightUpdate int32
 	var blkHashUpdate *chainhash.Hash
 
@@ -611,6 +722,9 @@ func (sm *SyncManager) handleBlockMsg(bmsg *blockMsg) {
 		// block height from the scriptSig of the coinbase transaction.
 		// Extraction is only attempted if the block's version is
 		// high enough (ver 2+).
+		// 我们刚收到一个来自同伴的孤儿区块。
+		// 为了更新节点的高度，我们尝试从coinbase事务的scriptSig中提取块高度。
+		// 只有在块的版本足够高（ver 2+）时才会尝试提取。
 		header := &bmsg.block.MsgBlock().Header
 		if blockchain.ShouldHaveSerializedBlockHeight(header) {
 			coinbaseTx := bmsg.block.Transactions()[0]
@@ -653,6 +767,9 @@ func (sm *SyncManager) handleBlockMsg(bmsg *blockMsg) {
 	// the server for updating peer heights if this is an orphan or our
 	// chain is "current". This avoids sending a spammy amount of messages
 	// if we're syncing the chain from scratch.
+	//  更新此节点的块高度。
+	// 但是，如果这是孤儿或我们的链是“当前”，则只向服务器发送消息以更新同等高度。
+	// 如果我们从头开始同步链，这可以避免发送大量垃圾邮件。
 	if blkHashUpdate != nil && heightUpdate != 0 {
 		peer.UpdateLastBlockHeight(heightUpdate)
 		if isOrphan || sm.current() {
@@ -669,6 +786,7 @@ func (sm *SyncManager) handleBlockMsg(bmsg *blockMsg) {
 	// This is headers-first mode, so if the block is not a checkpoint
 	// request more blocks using the header list when the request queue is
 	// getting short.
+	//这是标头优先模式，因此如果该块不是检查点，请求在请求队列变短时使用标头列表的更多块。
 	if !isCheckpointBlock {
 		if sm.startHeader != nil &&
 			len(state.requestedBlocks) < minInFlightBlocks {
@@ -681,6 +799,8 @@ func (sm *SyncManager) handleBlockMsg(bmsg *blockMsg) {
 	// there is a next checkpoint, get the next round of headers by asking
 	// for headers starting from the block after this one up to the next
 	// checkpoint.
+	//这是标头优先模式，块是检查点。
+	// 当有下一个检查点时，通过询问从此块之后的块开始到下一个检查点的头来获取下一轮头。
 	prevHeight := sm.nextCheckpoint.Height
 	prevHash := sm.nextCheckpoint.Hash
 	sm.nextCheckpoint = sm.findNextHeaderCheckpoint(prevHeight)
@@ -701,6 +821,8 @@ func (sm *SyncManager) handleBlockMsg(bmsg *blockMsg) {
 	// This is headers-first mode, the block is a checkpoint, and there are
 	// no more checkpoints, so switch to normal mode by requesting blocks
 	// from the block after this one up to the end of the chain (zero hash).
+	// 这是标头优先模式，块是检查点，并且没有更多检查点，
+	// 因此通过从块之后请求块直到链的末尾（零哈希）切换到正常模式。
 	sm.headersFirstMode = false
 	sm.headerList.Init()
 	log.Infof("Reached the final checkpoint -- switching to normal mode")
@@ -715,6 +837,8 @@ func (sm *SyncManager) handleBlockMsg(bmsg *blockMsg) {
 
 // fetchHeaderBlocks creates and sends a request to the syncPeer for the next
 // list of blocks to be downloaded based on the current list of headers.
+// fetchHeaderBlocks:抓取头部块
+// fetchHeaderBlocks根据当前的标题列表创建并向syncPeer发送请求，以获取下载的下一个块列表。
 func (sm *SyncManager) fetchHeaderBlocks() {
 	// Nothing to do if there is no start header.
 	if sm.startHeader == nil {
@@ -725,6 +849,8 @@ func (sm *SyncManager) fetchHeaderBlocks() {
 	// Build up a getdata request for the list of blocks the headers
 	// describe.  The size hint will be limited to wire.MaxInvPerMsg by
 	// the function, so no need to double check it here.
+	//为标题描述的块列表构建getdata请求。
+	// 大小提示将由函数限制为wire.MaxInvPerMsg，因此无需在此处仔细检查。
 	gdmsg := wire.NewMsgGetDataSizeHint(uint(sm.headerList.Len()))
 	numRequested := 0
 	for e := sm.startHeader; e != nil; e = e.Next() {
@@ -750,6 +876,8 @@ func (sm *SyncManager) fetchHeaderBlocks() {
 			// If we're fetching from a witness enabled peer
 			// post-fork, then ensure that we receive all the
 			// witness data in the blocks.
+			// 如果我们从一个见证启用的节点post-fork中获取，
+			// 那么请确保我们收到块中的所有见证数据。
 			if sm.syncPeer.IsWitnessEnabled() {
 				iv.Type = wire.InvTypeWitnessBlock
 			}
@@ -769,6 +897,7 @@ func (sm *SyncManager) fetchHeaderBlocks() {
 
 // handleHeadersMsg handles block header messages from all peers.  Headers are
 // requested when performing a headers-first sync.
+// handleHeadersMsg处理来自所有节点的块头消息。 执行标头优先同步时请求标头。
 func (sm *SyncManager) handleHeadersMsg(hmsg *headersMsg) {
 	peer := hmsg.peer
 	_, exists := sm.peerStates[peer]
@@ -850,11 +979,14 @@ func (sm *SyncManager) handleHeadersMsg(hmsg *headersMsg) {
 
 	// When this header is a checkpoint, switch to fetching the blocks for
 	// all of the headers since the last checkpoint.
+	//当此标头是检查点时，切换到从上一个检查点获取所有标头的块。
 	if receivedCheckpoint {
 		// Since the first entry of the list is always the final block
 		// that is already in the database and is only used to ensure
 		// the next header links properly, it must be removed before
 		// fetching the blocks.
+		// 由于列表的第一个条目始终是数据库中已存在的最后一个块，
+		// 并且仅用于确保下一个标题链接正确，因此必须在获取块之前将其删除。
 		sm.headerList.Remove(sm.headerList.Front())
 		log.Infof("Received %v block headers: Fetching blocks",
 			sm.headerList.Len())
@@ -866,6 +998,7 @@ func (sm *SyncManager) handleHeadersMsg(hmsg *headersMsg) {
 	// This header is not a checkpoint, so request the next batch of
 	// headers starting from the latest known header and ending with the
 	// next checkpoint.
+	//此标头不是检查点，因此从最新的已知标头开始请求下一批标头，并以下一个检查点结束。
 	locator := blockchain.BlockLocator([]*chainhash.Hash{finalHash})
 	err := peer.PushGetHeadersMsg(locator, sm.nextCheckpoint.Hash)
 	if err != nil {
@@ -880,6 +1013,9 @@ func (sm *SyncManager) handleHeadersMsg(hmsg *headersMsg) {
 // inventory can be when it is in different states such as blocks that are part
 // of the main chain, on a side chain, in the orphan pool, and transactions that
 // are in the memory pool (either the main pool or orphan pool).
+// haveInventory返回传递的库存矢量所代表的库存是否已知。
+// 这包括检查库存处于不同状态时的所有不同位置，
+// 例如作为主链，侧链，孤立池中的块以及内存池中的事务（主要是 游泳池或孤儿池）。
 func (sm *SyncManager) haveInventory(invVect *wire.InvVect) (bool, error) {
 	switch invVect.Type {
 	case wire.InvTypeWitnessBlock:
@@ -906,6 +1042,11 @@ func (sm *SyncManager) haveInventory(invVect *wire.InvVect) (bool, error) {
 		// checked because the vast majority of transactions consist of
 		// two outputs where one is some form of "pay-to-somebody-else"
 		// and the other is a change output.
+		// 从主链末尾的角度检查事务是否存在。
+		// 请注意，这只是最好的努力，因为检查每个输出的存在是昂贵的，
+		// 并且此检查的唯一目的是避免下载已知的事务。
+		// 仅检查前两个输出，因为绝大多数交易由两个输出组成，
+		// 其中一个是某种形式的“付钱给别人”，另一个是变更输出。
 		prevOut := wire.OutPoint{Hash: invVect.Hash}
 		for i := uint32(0); i < 2; i++ {
 			prevOut.Index = i
@@ -928,6 +1069,8 @@ func (sm *SyncManager) haveInventory(invVect *wire.InvVect) (bool, error) {
 
 // handleInvMsg handles inv messages from all peers.
 // We examine the inventory advertised by the remote peer and act accordingly.
+// handleInvMsg处理来自所有节点的inv消息。
+//我们检查远程节点公布的清单并采取相应措施。
 func (sm *SyncManager) handleInvMsg(imsg *invMsg) {
 	peer := imsg.peer
 	state, exists := sm.peerStates[peer]
@@ -952,6 +1095,9 @@ func (sm *SyncManager) handleInvMsg(imsg *invMsg) {
 	// announced block for this peer. We'll use this information later to
 	// update the heights of peers based on blocks we've accepted that they
 	// previously announced.
+	// 如果此inv包含块声明，并且这不是来自我们当前的同步节点或我们是当前的，
+	// 则更新该节点的最后一个已宣布的块。
+	// 我们稍后将使用此信息根据我们之前宣布的接受块来更新同行的高度。
 	if lastBlock != -1 && (peer != sm.syncPeer || sm.current()) {
 		peer.UpdateLastAnnouncedBlock(&invVects[lastBlock].Hash)
 	}
@@ -975,6 +1121,9 @@ func (sm *SyncManager) handleInvMsg(imsg *invMsg) {
 	// request parent blocks of orphans if we receive one we already have.
 	// Finally, attempt to detect potential stalls due to long side chains
 	// we already have and request more blocks to prevent them.
+	// 如果我们还没有广告库存，请索取广告库存。
+	// 此外，如果我们收到一个已经拥有的孤儿，请求孤儿的父母。
+	// 最后，尝试检测由于我们已经拥有的长边链而导致的潜在停顿，并请求更多的块来阻止它们。
 	for i, iv := range invVects {
 		// Ignore unsupported inventory types.
 		switch iv.Type {
@@ -1016,6 +1165,8 @@ func (sm *SyncManager) handleInvMsg(imsg *invMsg) {
 			// peers, as after segwit activation we only want to
 			// download from peers that can provide us full witness
 			// data for blocks.
+			// 忽略来自非见证启用的节点的块inv，
+			// 因为在segwit激活后我们只想从可以为块提供完整见证数据的节点下载。
 			if !peer.IsWitnessEnabled() && iv.Type == wire.InvTypeBlock {
 				continue
 			}
@@ -1036,6 +1187,12 @@ func (sm *SyncManager) handleInvMsg(imsg *invMsg) {
 			// resending the orphan block as an available block
 			// to signal there are more missing blocks that need to
 			// be requested.
+			// 块是我们已经拥有的孤立块。
+			// 处理现有的孤儿时，它会请求丢失的父块。
+			// 当这种情况发生时，这意味着缺少的块比单个库存消息中允许的块多。
+			// 结果，一旦该节点请求最终通告的块，
+			// 则远程节点注意到并且现在将该孤立块重新发送为
+			// 可用块以发信号通知需要请求更多丢失的块。
 			if sm.chain.IsKnownOrphan(&iv.Hash) {
 				// Request blocks starting at the latest known
 				// up to the root of the orphan that just came
@@ -1056,6 +1213,8 @@ func (sm *SyncManager) handleInvMsg(imsg *invMsg) {
 			// inventory message, so force a request for more.  This
 			// should only happen if we're on a really long side
 			// chain.
+			// 我们已经有了此库存消息所宣传的最终块，因此强制请求更多。
+			// 只有当我们处于一个非常长的侧链时才会发生这种情况。
 			if i == lastBlock {
 				// Request blocks after this one up to the
 				// final one the remote peer knows about (zero
@@ -1129,6 +1288,8 @@ func (sm *SyncManager) handleInvMsg(imsg *invMsg) {
 // limitMap is a helper function for maps that require a maximum limit by
 // evicting a random transaction if adding a new value would cause it to
 // overflow the maximum allowed.
+// limitMap是一个帮助函数，用于通过逐出随机事务来要求最大限制的映射，
+// 如果添加新值会导致它溢出允许的最大值。
 func (sm *SyncManager) limitMap(m map[chainhash.Hash]struct{}, limit int) {
 	if len(m)+1 > limit {
 		// Remove a random entry from the map.  For most compilers, Go's
@@ -1137,6 +1298,11 @@ func (sm *SyncManager) limitMap(m map[chainhash.Hash]struct{}, limit int) {
 		// is not important here because an adversary would have to be
 		// able to pull off preimage attacks on the hashing function in
 		// order to target eviction of specific entries anyways.
+		// 从地图中删除随机条目。
+		// 对于大多数编译器而言，Go的范围语句从随机项开始迭代，尽管规格并非100％保证。
+		// 迭代顺序在这里并不重要，因为攻击者必须能够对哈希函数进行前映像攻击，
+		// 以便无论如何都要针对特定条目的驱逐。
+
 		for txHash := range m {
 			delete(m, txHash)
 			return
@@ -1151,7 +1317,7 @@ func (sm *SyncManager) limitMap(m map[chainhash.Hash]struct{}, limit int) {
 // important because the sync manager controls which blocks are needed and how
 // the fetching should proceed.
 // blockHandler是同步管理器的主要处理程序。 它必须作为协程运行。
-// 它在来自对等处理程序的单独协程中处理块和inv消息，
+// 它在来自节点处理程序的单独协程中处理块和inv消息，
 // 因此块（MsgBlock）消息由单个线程处理，而无需锁定内存数据结构。
 // 这很重要，因为同步管理器控制需要哪些块以及如何进行提取。
 
@@ -1237,10 +1403,13 @@ out:
 // handleBlockchainNotification handles notifications from blockchain.  It does
 // things such as request orphan block parents and relay accepted blocks to
 // connected peers.
+// handleBlockchainNotification处理来自区块链的通知。
+// 它执行诸如请求孤立块父项和中继已接受块到连接节点项之类的操作。
 func (sm *SyncManager) handleBlockchainNotification(notification *blockchain.Notification) {
 	switch notification.Type {
 	// A block has been accepted into the block chain.  Relay it to other
 	// peers.
+	//区块链已被接受。 将其转发给其他节点。
 	case blockchain.NTBlockAccepted:
 		// Don't relay if we are not current. Other peers that are
 		// current should already know about it.
@@ -1273,6 +1442,10 @@ func (sm *SyncManager) handleBlockchainNotification(notification *blockchain.Not
 		// no longer an orphan. Transactions which depend on a confirmed
 		// transaction are NOT removed recursively because they are still
 		// valid.
+		// 从事务池中删除连接块中的所有事务（coinbase除外）。
+		// 其次，删除由于这些新交易而现在双倍花费的任何交易。
+		// 最后，删除任何不再是孤儿的交易。
+		// 依赖于已确认事务的事务不会被递归删除，因为它们仍然有效。
 		for _, tx := range block.Transactions()[1:] {
 			sm.txMemPool.RemoveTransaction(tx, false)
 			sm.txMemPool.RemoveDoubleSpends(tx)
@@ -1289,6 +1462,8 @@ func (sm *SyncManager) handleBlockchainNotification(notification *blockchain.Not
 			// If an error is somehow generated then the fee estimator
 			// has entered an invalid state. Since it doesn't know how
 			// to recover, create a new one.
+			// 如果以某种方式生成错误，则费用估算器已进入无效状态。
+			// 由于它不知道如何恢复，因此创建一个新的。
 			if err != nil {
 				sm.feeEstimator = mempool.NewFeeEstimator(
 					mempool.DefaultEstimateFeeMaxRollback,
@@ -1306,6 +1481,7 @@ func (sm *SyncManager) handleBlockchainNotification(notification *blockchain.Not
 
 		// Reinsert all of the transactions (except the coinbase) into
 		// the transaction pool.
+		//将所有事务（coinbase除外）重新插入事务池。
 		for _, tx := range block.Transactions()[1:] {
 			_, _, err := sm.txMemPool.MaybeAcceptTransaction(tx,
 				false, false)
@@ -1325,6 +1501,7 @@ func (sm *SyncManager) handleBlockchainNotification(notification *blockchain.Not
 }
 
 // NewPeer informs the sync manager of a newly active peer.
+// NewPeer通知同步管理器新活动的节点。
 func (sm *SyncManager) NewPeer(peer *peerpkg.Peer) {
 	// Ignore if we are shutting down.
 	if atomic.LoadInt32(&sm.shutdown) != 0 {
@@ -1336,6 +1513,7 @@ func (sm *SyncManager) NewPeer(peer *peerpkg.Peer) {
 // QueueTx adds the passed transaction message and peer to the block handling
 // queue. Responds to the done channel argument after the tx message is
 // processed.
+// QueueTx将传递的事务消息和节点添加到块处理队列。 在处理tx消息之后响应完成的通道参数。
 func (sm *SyncManager) QueueTx(tx *btcutil.Tx, peer *peerpkg.Peer, done chan struct{}) {
 	// Don't accept more transactions if we're shutting down.
 	if atomic.LoadInt32(&sm.shutdown) != 0 {
@@ -1349,8 +1527,10 @@ func (sm *SyncManager) QueueTx(tx *btcutil.Tx, peer *peerpkg.Peer, done chan str
 // QueueBlock adds the passed block message and peer to the block handling
 // queue. Responds to the done channel argument after the block message is
 // processed.
+// QueueBlock将传递的块消息和节点添加到块处理队列。 处理块消息后响应完成的通道参数。
 func (sm *SyncManager) QueueBlock(block *btcutil.Block, peer *peerpkg.Peer, done chan struct{}) {
 	// Don't accept more blocks if we're shutting down.
+	//如果我们关机，不要接受更多的块。
 	if atomic.LoadInt32(&sm.shutdown) != 0 {
 		done <- struct{}{}
 		return
@@ -1360,9 +1540,11 @@ func (sm *SyncManager) QueueBlock(block *btcutil.Block, peer *peerpkg.Peer, done
 }
 
 // QueueInv adds the passed inv message and peer to the block handling queue.
+// QueueInv将传递的inv消息和节点添加到块处理队列。
 func (sm *SyncManager) QueueInv(inv *wire.MsgInv, peer *peerpkg.Peer) {
 	// No channel handling here because peers do not need to block on inv
 	// messages.
+	//此处没有通道处理，因为节点不需要阻止对inv消息。
 	if atomic.LoadInt32(&sm.shutdown) != 0 {
 		return
 	}
@@ -1372,9 +1554,11 @@ func (sm *SyncManager) QueueInv(inv *wire.MsgInv, peer *peerpkg.Peer) {
 
 // QueueHeaders adds the passed headers message and peer to the block handling
 // queue.
+// QueueHeaders将传递的头消息和节点添加到块处理队列。
 func (sm *SyncManager) QueueHeaders(headers *wire.MsgHeaders, peer *peerpkg.Peer) {
 	// No channel handling here because peers do not need to block on
 	// headers messages.
+	//此处没有通道处理，因为节点不需要阻止标头消息。
 	if atomic.LoadInt32(&sm.shutdown) != 0 {
 		return
 	}
@@ -1383,6 +1567,7 @@ func (sm *SyncManager) QueueHeaders(headers *wire.MsgHeaders, peer *peerpkg.Peer
 }
 
 // DonePeer informs the blockmanager that a peer has disconnected.
+// DonePeer通知块管理器节点已断开连接。
 func (sm *SyncManager) DonePeer(peer *peerpkg.Peer) {
 	// Ignore if we are shutting down.
 	if atomic.LoadInt32(&sm.shutdown) != 0 {
@@ -1393,6 +1578,7 @@ func (sm *SyncManager) DonePeer(peer *peerpkg.Peer) {
 }
 
 // Start begins the core block handler which processes block and inv messages.
+// Start开始处理block和inv消息的核心块处理程序。
 func (sm *SyncManager) Start() {
 	// Already started?
 	if atomic.AddInt32(&sm.started, 1) != 1 {
@@ -1406,6 +1592,8 @@ func (sm *SyncManager) Start() {
 
 // Stop gracefully shuts down the sync manager by stopping all asynchronous
 // handlers and waiting for them to finish.
+// 通过停止所有异步来优雅地停止同步管理器
+// 处理程序并等待它们完成。
 func (sm *SyncManager) Stop() error {
 	if atomic.AddInt32(&sm.shutdown, 1) != 1 {
 		log.Warnf("Sync manager is already in the process of " +
@@ -1420,6 +1608,7 @@ func (sm *SyncManager) Stop() error {
 }
 
 // SyncPeerID returns the ID of the current sync peer, or 0 if there is none.
+// SyncPeerID返回当前同步节点的ID，如果没有，则返回0。
 func (sm *SyncManager) SyncPeerID() int32 {
 	reply := make(chan int32)
 	sm.msgChan <- getSyncPeerMsg{reply: reply}
@@ -1428,6 +1617,7 @@ func (sm *SyncManager) SyncPeerID() int32 {
 
 // ProcessBlock makes use of ProcessBlock on an internal instance of a block
 // chain.
+// ProcessBlock在块链的内部实例上使用ProcessBlock。
 func (sm *SyncManager) ProcessBlock(block *btcutil.Block, flags blockchain.BehaviorFlags) (bool, error) {
 	reply := make(chan processBlockResponse, 1)
 	sm.msgChan <- processBlockMsg{block: block, flags: flags, reply: reply}
@@ -1437,6 +1627,7 @@ func (sm *SyncManager) ProcessBlock(block *btcutil.Block, flags blockchain.Behav
 
 // IsCurrent returns whether or not the sync manager believes it is synced with
 // the connected peers.
+// IsCurrent返回同步管理器是否认为它与已连接的节点同步。
 func (sm *SyncManager) IsCurrent() bool {
 	reply := make(chan bool)
 	sm.msgChan <- isCurrentMsg{reply: reply}
@@ -1447,6 +1638,9 @@ func (sm *SyncManager) IsCurrent() bool {
 //
 // Note that while paused, all peer and block processing is halted.  The
 // message sender should avoid pausing the sync manager for long durations.
+//暂停暂停同步管理器，直到返回的频道关闭。
+//
+//请注意，暂停时，所有节点和块处理都将暂停。 邮件发件人应避免长时间暂停同步管理器。
 func (sm *SyncManager) Pause() chan<- struct{} {
 	c := make(chan struct{})
 	sm.msgChan <- pauseMsg{c}
@@ -1455,6 +1649,7 @@ func (sm *SyncManager) Pause() chan<- struct{} {
 
 // New constructs a new SyncManager. Use Start to begin processing asynchronous
 // block, tx, and inv updates.
+// New构造一个新的SyncManager。 使用Start开始处理异步块，tx和inv更新。
 func New(config *Config) (*SyncManager, error) {
 	sm := SyncManager{
 		peerNotifier: config.PeerNotifier,
