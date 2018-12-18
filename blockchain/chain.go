@@ -1713,6 +1713,7 @@ type Config struct {
 	HashCache *txscript.HashCache
 }
 
+// New使用提供的配置详细信息返回BlockChain实例。
 // New returns a BlockChain instance using the provided configuration details.
 func New(config *Config) (*BlockChain, error) {
 	// Enforce required config fields.

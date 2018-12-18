@@ -225,14 +225,19 @@ type Params struct {
 var MainNetParams = Params{
 	Name:        "mainnet",
 	Net:         wire.MainNet,
-	DefaultPort: "8333",
+	//DefaultPort: "8333",		//--by btc
+	DefaultPort: "35677",		//--by eac
 	DNSSeeds: []DNSSeed{
-		{"seed.bitcoin.sipa.be", true},
-		{"dnsseed.bluematt.me", true},
-		{"dnsseed.bitcoin.dashjr.org", false},
-		{"seed.bitcoinstats.com", true},
-		{"seed.bitnodes.io", false},
-		{"seed.bitcoin.jonasschnelli.ch", true},
+		//--by btc
+		// {"seed.bitcoin.sipa.be", true},
+		// {"dnsseed.bluematt.me", true},
+		// {"dnsseed.bitcoin.dashjr.org", false},
+		// {"seed.bitcoinstats.com", true},
+		// {"seed.bitnodes.io", false},
+		// {"seed.bitcoin.jonasschnelli.ch", true},
+
+		//--by eac
+		{"dnsseed.earthcointools.org", true},	
 	},
 
 	// Chain parameters
@@ -401,12 +406,17 @@ var RegressionNetParams = Params{
 var TestNet3Params = Params{
 	Name:        "testnet3",
 	Net:         wire.TestNet3,
-	DefaultPort: "18333",
+	//DefaultPort: "18333",	//-- by btc
+	DefaultPort: "25677",	//-- by eac
 	DNSSeeds: []DNSSeed{
-		{"testnet-seed.bitcoin.jonasschnelli.ch", true},
-		{"testnet-seed.bitcoin.schildbach.de", false},
-		{"seed.tbtc.petertodd.org", true},
-		{"testnet-seed.bluematt.me", false},
+		//-- by btc
+		// {"testnet-seed.bitcoin.jonasschnelli.ch", true},
+		// {"testnet-seed.bitcoin.schildbach.de", false},
+		// {"seed.tbtc.petertodd.org", true},
+		// {"testnet-seed.bluematt.me", false},
+
+		//-- by eac
+		{"testnet-seed.earthcointools.org", true},
 	},
 
 	// Chain parameters
