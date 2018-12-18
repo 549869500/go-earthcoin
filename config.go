@@ -1173,6 +1173,11 @@ func btcdDial(addr net.Addr) (net.Conn, error) {
 //
 // Any attempt to resolve a tor address (.onion) will return an error since they
 // are not intended to be resolved outside of the tor proxy.
+// btcdLookup使用正确的DNS查找功能解析给定主机的IP，具体取决于配置选项。
+// 例如，当指定--proxy标志时，将使用tor解析地址，除非还指定了--noonion，
+// 在这种情况下将使用正常的系统DNS解析器。
+//
+//任何解析tor地址（.onion）的尝试都将返回错误，因为它们无意在tor代理之外解析。
 func btcdLookup(host string) ([]net.IP, error) {
 	if strings.HasSuffix(host, ".onion") {
 		return nil, fmt.Errorf("attempt to resolve tor address %s", host)

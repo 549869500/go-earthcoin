@@ -30,6 +30,7 @@ type OnSeed func(addrs []*wire.NetAddress)
 type LookupFunc func(string) ([]net.IP, error)
 
 // SeedFromDNS uses DNS seeding to populate the address manager with peers.
+// SeedFromDNS使用DNS种子来为节点填充地址管理器（从DNS种子获取节点地址）。
 func SeedFromDNS(chainParams *chaincfg.Params, reqServices wire.ServiceFlag,
 	lookupFn LookupFunc, seedFn OnSeed) {
 
