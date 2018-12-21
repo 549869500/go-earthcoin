@@ -2005,7 +2005,8 @@ func newPeerConfig(sp *serverPeer) *peer.Config {
 // 在建立新的入站连接时，连接管理器将调用inboundPeerConnected。
 // 它初始化一个新的入站服务器对等实例，将其与连接关联，并启动goroutine以等待断开连接。
 func (s *server) inboundPeerConnected(conn net.Conn) {
-	log.Infof("start inboundPeerConnected")
+	peerLog.Infof("start inboundPeerConnected")
+	
 	sp := newServerPeer(s, false)
 	sp.isWhitelisted = isWhitelisted(conn.RemoteAddr())
 	sp.Peer = peer.NewInboundPeer(newPeerConfig(sp))
@@ -2022,7 +2023,7 @@ func (s *server) inboundPeerConnected(conn net.Conn) {
 // 它初始化一个新的出站服务器对等实例，将其与相关状态（如连接请求实例和连接本身）相关联，
 // 最后通知地址管理器该尝试。
 func (s *server) outboundPeerConnected(c *connmgr.ConnReq, conn net.Conn) {
-	log.Infof("start outboundPeerConnected")
+	peerLog.Infof("start outboundPeerConnected")
 	sp := newServerPeer(s, c.Permanent)
 	p, err := peer.NewOutboundPeer(newPeerConfig(sp), c.Addr.String())
 	if err != nil {
@@ -2557,7 +2558,7 @@ func setupRPCListeners() ([]net.Listener, error) {
 // newServer返回一个新的btcd服务器，配置为在addr上监听chainParams指定的比特币网络类型。
 // 使用start开始接受来自对等方的连接。
 func newServer(listenAddrs []string, db database.DB, chainParams *chaincfg.Params, interrupt <-chan struct{}) (*server, error) {
-	log.Infof("start newServer")
+	peerLog.Infof("start newServer")
 	services := defaultServices
 	if cfg.NoPeerBloomFilters {
 		services &^= wire.SFNodeBloom
