@@ -239,7 +239,6 @@ var MainNetParams = Params{
 	
 	//--by eac
 	DNSSeeds: []DNSSeed{	
-		{"dnsseed.earthcointools.org", true},	
 		{"106.14.222.124", true},
 		{"120.79.171.136",true},
 		{"212.237.21.74",true},

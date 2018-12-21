@@ -2216,6 +2216,9 @@ func (p *Peer) Disconnect() {
 // readRemoteVersionMsg等待从远程节点到达的下一条消息。
 // 如果下一条消息不是版本消息或版本不可接受，则返回错误。
 func (p *Peer) readRemoteVersionMsg() error {
+	
+	log.Infof("start readRemoteVersionMsg")
+
 	// Read their version message.
 	remoteMsg, _, err := p.readMessage(wire.LatestEncoding)
 	if err != nil {

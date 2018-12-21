@@ -394,6 +394,7 @@ func hasServices(advertised, desired wire.ServiceFlag) bool {
 // OnVersion is invoked when a peer receives a version bitcoin message
 // and is used to negotiate the protocol version details as well as kick start
 // the communications.
+//当对等体收到版本比特币消息时调用COnVersion，用于协商协议版本细节以及启动通信。
 func (sp *serverPeer) OnVersion(_ *peer.Peer, msg *wire.MsgVersion) *wire.MsgReject {
 	// Update the address manager with the advertised services for outbound
 	// connections in case they have changed.  This is not done for inbound
@@ -405,6 +406,12 @@ func (sp *serverPeer) OnVersion(_ *peer.Peer, msg *wire.MsgVersion) *wire.MsgRej
 	// NOTE: This is done before rejecting peers that are too old to ensure
 	// it is updated regardless in the case a new minimum protocol version is
 	// enforced and the remote node has not upgraded yet.
+	// 如果出站连接已更改，则使用公布的服务更新地址管理器。
+	// 对于入站连接，这不会有助于防止恶意行为，并且在模拟测试网络上运行时会被跳过，
+	// 因为它仅用于连接到指定的对等方并主动避免广告并连接到已发现的对等方。
+	//
+	 // 注意：这是在拒绝太旧以确保更新的对等体之前完成的，
+	 // 无论是否强制执行新的最低协议版本且远程节点尚未升级。
 	isInbound := sp.Inbound()
 	remoteAddr := sp.NA()
 	addrManager := sp.server.addrManager
@@ -483,6 +490,7 @@ func (sp *serverPeer) OnVersion(_ *peer.Peer, msg *wire.MsgVersion) *wire.MsgRej
 	sp.server.timeSource.AddTimeSample(sp.Addr(), msg.Timestamp)
 
 	// Signal the sync manager this peer is a new sync candidate.
+	// 发信号通知同步管理器此对等体是新的同步候选者。
 	sp.server.syncManager.NewPeer(sp.Peer)
 
 	// Choose whether or not to relay transactions before a filter command
@@ -1945,6 +1953,7 @@ func disconnectPeer(peerList map[int32]*serverPeer, compareFunc func(*serverPeer
 }
 
 // newPeerConfig returns the configuration for the given serverPeer.
+// newPeerConfig返回给定serverPeer的配置。
 func newPeerConfig(sp *serverPeer) *peer.Config {
 	return &peer.Config{
 		Listeners: peer.MessageListeners{
