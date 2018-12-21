@@ -13,7 +13,10 @@ import (
 // XXX pedro: we will probably need to bump this.
 const (
 	// ProtocolVersion is the latest protocol version this package supports.
-	ProtocolVersion uint32 = 70013
+	// -- by btc
+	//ProtocolVersion uint32 = 70013
+	// -- by eac
+	ProtocolVersion uint32 = 70016
 
 	// MultipleAddressVersion is the protocol version which added multiple
 	// addresses per message (pver >= MultipleAddressVersion).

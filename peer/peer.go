@@ -2427,6 +2427,8 @@ func (p *Peer) negotiateOutboundProtocol() error {
 func (p *Peer) start() error {
 	log.Tracef("Starting peer %s", p)
 
+	log.Infof("Starting peer %s", p)
+
 	negotiateErr := make(chan error, 1)
 	go func() {
 		if p.inbound {
@@ -2473,6 +2475,8 @@ func (p *Peer) start() error {
 // AssociateConnection将给定的conn与节点关联。 当节点已经连接时调用此功能将不起作用。
 func (p *Peer) AssociateConnection(conn net.Conn) {
 	// Already connected?
+	log.Infof("start AssociateConnection")
+
 	if !atomic.CompareAndSwapInt32(&p.connected, 0, 1) {
 		return
 	}
