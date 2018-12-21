@@ -312,7 +312,8 @@ func (sp *serverPeer) addressKnown(na *wire.NetAddress) bool {
 // It is safe for concurrent access.
 func (sp *serverPeer) setDisableRelayTx(disable bool) {
 	sp.relayMtx.Lock()
-	sp.disableRelayTx = disable
+	// -- by eac remove DisableRelayTx
+	//sp.disableRelayTx = disable
 	sp.relayMtx.Unlock()
 }
 
@@ -1993,7 +1994,8 @@ func newPeerConfig(sp *serverPeer) *peer.Config {
 		UserAgentComments: cfg.UserAgentComments,
 		ChainParams:       sp.server.chainParams,
 		Services:          sp.server.services,
-		DisableRelayTx:    cfg.BlocksOnly,
+		// -- by eac remove DisableRelayTx
+		//DisableRelayTx:    cfg.BlocksOnly,
 		ProtocolVersion:   peer.MaxProtocolVersion,
 		TrickleInterval:   cfg.TrickleInterval,
 	}

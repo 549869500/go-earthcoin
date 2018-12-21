@@ -2398,7 +2398,8 @@ func (p *Peer) localVersionMsg() (*wire.MsgVersion, error) {
 
 	// Advertise local services.
 	//宣传本地服务
-	msg.Services = p.cfg.Services
+	//msg.Services = p.cfg.Services
+	msg.LocalServices = 1
 
 	// Advertise our max supported protocol version.
 	//宣传我们最大支持的协议版本。

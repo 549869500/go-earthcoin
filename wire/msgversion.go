@@ -36,6 +36,9 @@ type MsgVersion struct {
 	// Bitfield which identifies the enabled services.
 	Services ServiceFlag
 
+	// -- by eac 
+	LocalServices int64
+
 	// Time the message was generated.  This is encoded as an int64 on the wire.
 	Timestamp time.Time
 
@@ -234,7 +237,9 @@ func NewMsgVersion(me *NetAddress, you *NetAddress, nonce uint64,
 	// doesn't support better.
 	return &MsgVersion{
 		ProtocolVersion: int32(ProtocolVersion),
-		Services:        0,
+		// -- by eac
+		//Services:        0,
+		LocalServices:	 0,
 		Timestamp:       time.Unix(time.Now().Unix(), 0),
 		AddrYou:         *you,
 		AddrMe:          *me,
