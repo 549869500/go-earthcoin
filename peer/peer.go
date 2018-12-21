@@ -1269,6 +1269,8 @@ func (p *Peer) readMessage(encoding wire.MessageEncoding) (wire.Message, []byte,
 		p.cfg.Listeners.OnRead(p, n, msg, err)
 	}
 	if err != nil {
+		log.Infof("readMessage nil err %s ", p)
+		log.Infof("err : %s ", err)
 		return nil, nil, err
 	}
 
@@ -1284,6 +1286,17 @@ func (p *Peer) readMessage(encoding wire.MessageEncoding) (wire.Message, []byte,
 		return fmt.Sprintf("Received %v%s from %s",
 			msg.Command(), summary, p)
 	}))
+
+	log.Infof("%v", newLogClosure(func() string {
+		// Debug summary of message.
+		summary := messageSummary(msg)
+		if len(summary) > 0 {
+			summary = " (" + summary + ")"
+		}
+		return fmt.Sprintf("Received %v%s from %s",
+			msg.Command(), summary, p)
+	}))
+
 	log.Tracef("%v", newLogClosure(func() string {
 		return spew.Sdump(msg)
 	}))
@@ -2217,11 +2230,13 @@ func (p *Peer) Disconnect() {
 // 如果下一条消息不是版本消息或版本不可接受，则返回错误。
 func (p *Peer) readRemoteVersionMsg() error {
 	
-	log.Infof("start readRemoteVersionMsg")
+	log.Infof("start readRemoteVersionMsg  %s", p)
 
 	// Read their version message.
 	remoteMsg, _, err := p.readMessage(wire.LatestEncoding)
 	if err != nil {
+		log.Infof("remoteMsg err %s", p)
+
 		return err
 	}
 
@@ -2235,7 +2250,7 @@ func (p *Peer) readRemoteVersionMsg() error {
 		_ = p.writeMessage(rejectMsg, wire.LatestEncoding)
 		return errors.New(reason)
 	}
-
+	log.Infof("start readRemoteVersionMsg a %s", p)
 	// Detect self connections.
 	if !allowSelfConns && sentNonces.Exists(msg.Nonce) {
 		return errors.New("disconnecting peer connected to self")
@@ -2251,6 +2266,8 @@ func (p *Peer) readRemoteVersionMsg() error {
 	p.flagsMtx.Unlock()
 	log.Debugf("Negotiated protocol version %d for peer %s",
 		p.protocolVersion, p)
+
+	log.Infof("start readRemoteVersionMsg b %s", p)
 
 	// Updating a bunch of stats including block based stats, and the
 	// peer's time offset.
@@ -2290,6 +2307,8 @@ func (p *Peer) readRemoteVersionMsg() error {
 			return errors.New(rejectMsg.Reason)
 		}
 	}
+
+	log.Infof("start readRemoteVersionMsg c %s", p)
 
 	// Notify and disconnect clients that have a protocol version that is
 	// too old.
@@ -2335,6 +2354,7 @@ func (p *Peer) localVersionMsg() (*wire.MsgVersion, error) {
 	if p.cfg.Proxy != "" {
 		proxyaddress, _, err := net.SplitHostPort(p.cfg.Proxy)
 		// invalid proxy means poorly configured, be on the safe side.
+		//无效的代理意味着配置不当，是安全的。
 		if err != nil || p.na.IP.String() == proxyaddress {
 			theirNA = wire.NewNetAddressIPPort(net.IP([]byte{0, 0, 0, 0}), 0,
 				theirNA.Services)
@@ -2368,18 +2388,23 @@ func (p *Peer) localVersionMsg() (*wire.MsgVersion, error) {
 	nonce := uint64(rand.Int63())
 	sentNonces.Add(nonce)
 
+	//&{%!s(int32=70016) SFNodeNetwork|SFNodeBloom|SFNodeWitness|SFNodeCF 2018-12-21 14:50:15 +0800 CST {2018-12-21 14:50:15 +0800 CST 0x0 106.14.222.124 %!s(uint16=35677)} {0001-01-01 00:00:00 +0000 UTC SFNodeNetwork|SFNodeBloom|SFNodeWitness|SFNodeCF <nil> %!s(uint16=0)} %!s(uint64=4582433502102686919) /btcwire:0.5.0/btcd:0.12.0/ %!s(int32=0) %!s(bool=false)}
 	// Version message.
+	//版本消息
 	msg := wire.NewMsgVersion(ourNA, theirNA, nonce, blockNum)
 	msg.AddUserAgent(p.cfg.UserAgentName, p.cfg.UserAgentVersion,
 		p.cfg.UserAgentComments...)
 
 	// Advertise local services.
+	//宣传本地服务
 	msg.Services = p.cfg.Services
 
 	// Advertise our max supported protocol version.
+	//宣传我们最大支持的协议版本。
 	msg.ProtocolVersion = int32(p.cfg.ProtocolVersion)
 
 	// Advertise if inv messages for transactions are desired.
+	//如果需要用于事务的inv消息，则发布广告。
 	msg.DisableRelayTx = p.cfg.DisableRelayTx
 
 	return msg, nil
@@ -2393,6 +2418,9 @@ func (p *Peer) writeLocalVersionMsg() error {
 		return err
 	}
 
+	log.Infof("start writeLocalVersionMsg %s", p)
+	log.Infof("Msg %s", localVerMsg)
+
 	return p.writeMessage(localVerMsg, wire.LatestEncoding)
 }
 
@@ -2402,6 +2430,7 @@ func (p *Peer) writeLocalVersionMsg() error {
 // negotiateInboundProtocol等待从节点接收版本消息然后发送我们的版本消息。
 // 如果事件不按该顺序发生，则返回错误。
 func (p *Peer) negotiateInboundProtocol() error {
+	log.Infof("Starting negotiateInboundProtocol %s", p)
 	if err := p.readRemoteVersionMsg(); err != nil {
 		return err
 	}
@@ -2415,6 +2444,7 @@ func (p *Peer) negotiateInboundProtocol() error {
 // negotiateOutboundProtocol发送我们的版本消息，然后等待从节点接收版本消息。
 // 如果事件不按该顺序发生，则返回错误。
 func (p *Peer) negotiateOutboundProtocol() error {
+	log.Infof("Starting negotiateOutboundProtocol %s", p)
 	if err := p.writeLocalVersionMsg(); err != nil {
 		return err
 	}
@@ -2475,7 +2505,6 @@ func (p *Peer) start() error {
 // AssociateConnection将给定的conn与节点关联。 当节点已经连接时调用此功能将不起作用。
 func (p *Peer) AssociateConnection(conn net.Conn) {
 	// Already connected?
-	log.Infof("start AssociateConnection")
 
 	if !atomic.CompareAndSwapInt32(&p.connected, 0, 1) {
 		return

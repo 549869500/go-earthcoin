@@ -17,7 +17,10 @@ import (
 const MaxUserAgentLen = 256
 
 // DefaultUserAgent for wire in the stack
-const DefaultUserAgent = "/btcwire:0.5.0/"
+// -- by btc
+// const DefaultUserAgent = "/btcwire:0.5.0/"
+// -- by eac
+const DefaultUserAgent = "/Satoshi:1.5.5.1/"
 
 // MsgVersion implements the Message interface and represents a bitcoin version
 // message.  It is used for a peer to advertise itself as soon as an outbound
@@ -220,6 +223,7 @@ func (msg *MsgVersion) MaxPayloadLength(pver uint32) uint32 {
 // NewMsgVersion returns a new bitcoin version message that conforms to the
 // Message interface using the passed parameters and defaults for the remaining
 // fields.
+// NewMsgVersion使用传递的参数和其余字段的默认值返回符合Message接口的新比特币版本消息。
 func NewMsgVersion(me *NetAddress, you *NetAddress, nonce uint64,
 	lastBlock int32) *MsgVersion {
 
@@ -232,7 +236,7 @@ func NewMsgVersion(me *NetAddress, you *NetAddress, nonce uint64,
 		AddrYou:         *you,
 		AddrMe:          *me,
 		Nonce:           nonce,
-		UserAgent:       DefaultUserAgent,
+		UserAgent:       DefaultUserAgent,	// DefaultUserAgent = "/btcwire:0.5.0/"
 		LastBlock:       lastBlock,
 		DisableRelayTx:  false,
 	}
