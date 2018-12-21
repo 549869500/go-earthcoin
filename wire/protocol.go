@@ -50,7 +50,10 @@ const (
 
 	// FeeFilterVersion is the protocol version which added a new
 	// feefilter message.
-	FeeFilterVersion uint32 = 70013
+	// -- by btc
+	// FeeFilterVersion uint32 = 70013
+	// -- by eac
+	FeeFilterVersion uint32 = 70016
 )
 
 // ServiceFlag identifies services supported by a bitcoin peer.
