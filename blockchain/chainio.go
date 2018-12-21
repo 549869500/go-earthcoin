@@ -1101,9 +1101,12 @@ func (b *BlockChain) createChainState() error {
 // initChainState attempts to load and initialize the chain state from the
 // database.  When the db does not yet contain any chain state, both it and the
 // chain state are initialized to the genesis block.
+// initChainState尝试从数据库加载和初始化链状态。
+// 当db还没有包含任何链状态时，它和链状态都被初始化为genesis块。
 func (b *BlockChain) initChainState() error {
 	// Determine the state of the chain database. We may need to initialize
 	// everything from scratch or upgrade certain buckets.
+	//确定链数据库的状态。 我们可能需要从头开始初始化所有内容或升级某些存储桶。
 	var initialized, hasBlockIndex bool
 	err := b.db.View(func(dbTx database.Tx) error {
 		initialized = dbTx.Metadata().Get(chainStateKeyName) != nil
@@ -1117,6 +1120,7 @@ func (b *BlockChain) initChainState() error {
 	if !initialized {
 		// At this point the database has not already been initialized, so
 		// initialize both it and the chain state to the genesis block.
+		//此时数据库尚未初始化，因此将其和链状态初始化为genesis块。
 		return b.createChainState()
 	}
 

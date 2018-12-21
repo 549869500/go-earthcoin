@@ -1668,6 +1668,9 @@ type Config struct {
 	// with.
 	//
 	// This field is required.
+	// ChainParams识别链与哪个链参数相关联。
+	//
+	// 这是必填栏。
 	ChainParams *chaincfg.Params
 
 	// Checkpoints hold caller-defined checkpoints that should be added to

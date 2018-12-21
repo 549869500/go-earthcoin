@@ -49,6 +49,8 @@ type chainView struct {
 // newChainView returns a new chain view for the given tip block node.  Passing
 // nil as the tip will result in a chain view that is not initialized.  The tip
 // can be updated at any time via the setTip function.
+// newChainView返回给定提示块节点的新链视图。 将nil作为提示传递将导致未初始化的链视图。
+// 可以通过setTip函数随时更新提示。
 func newChainView(tip *blockNode) *chainView {
 	// The mutex is intentionally not held since this is a constructor.
 	var c chainView
@@ -96,6 +98,9 @@ func (c *chainView) tip() *blockNode {
 // nil if there is no tip.
 //
 // This function is safe for concurrent access.
+// Tip返回链视图的当前tip块节点。 如果没有提示，它将返回nil。
+//
+//此函数对于并发访问是安全的。
 func (c *chainView) Tip() *blockNode {
 	c.mtx.Lock()
 	tip := c.tip()
@@ -111,6 +116,12 @@ func (c *chainView) Tip() *blockNode {
 // up to the caller to ensure the lock is held.
 //
 // This function MUST be called with the view mutex locked (for writes).
+// setTip设置链视图以使用提供的块节点作为当前提示，
+// 并通过使用通过向后移动获得的节点填充它来确保视图是一致的，必要时将其一直向后移动到genesis块。 
+// 进一步的呼叫只会执行所需的最少工作，因此在链尖之间切换是有效的。
+// 这仅与导出的版本不同，因为由呼叫者决定是否保持锁定。
+//
+//必须在锁定视图互斥锁（用于写入）的情况下调用此函数。
 func (c *chainView) setTip(node *blockNode) {
 	if node == nil {
 		// Keep the backing array around for potential future use.
