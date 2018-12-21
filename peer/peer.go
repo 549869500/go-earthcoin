@@ -346,7 +346,8 @@ type Config struct {
 	// DisableRelayTx specifies if the remote peer should be informed to
 	// not send inv messages for transactions.
 	// DisableRelayTx指定是否应通知远程节点不发送事务的inv消息。
-	DisableRelayTx bool
+	// -- by eac remove DisableRelayTx
+	//DisableRelayTx bool
 
 	// Listeners houses callback functions to be invoked on receiving peer
 	// messages.
@@ -2383,7 +2384,7 @@ func (p *Peer) localVersionMsg() (*wire.MsgVersion, error) {
 	// Generate a unique nonce for this peer so self connections can be
 	// detected.  This is accomplished by adding it to a size-limited map of
 	// recently seen nonces.
-	//为此节点生成唯一的随机数，以便可以检测到自身连接。
+	// 为此节点生成唯一的随机数，以便可以检测到自身连接。
 	// 这是通过将其添加到最近看到的随机数的大小有限的地图来实现的。
 	nonce := uint64(rand.Int63())
 	sentNonces.Add(nonce)
@@ -2405,7 +2406,8 @@ func (p *Peer) localVersionMsg() (*wire.MsgVersion, error) {
 
 	// Advertise if inv messages for transactions are desired.
 	//如果需要用于事务的inv消息，则发布广告。
-	msg.DisableRelayTx = p.cfg.DisableRelayTx
+	// -- by eac remove DisableRelayTx
+	//msg.DisableRelayTx = p.cfg.DisableRelayTx
 
 	return msg, nil
 }

@@ -495,7 +495,8 @@ func (sp *serverPeer) OnVersion(_ *peer.Peer, msg *wire.MsgVersion) *wire.MsgRej
 
 	// Choose whether or not to relay transactions before a filter command
 	// is received.
-	sp.setDisableRelayTx(msg.DisableRelayTx)
+	// -- by eac remove DisableRelayTx
+	//sp.setDisableRelayTx(msg.DisableRelayTx)
 
 	// Add valid peer to the server.
 	sp.server.AddPeer(sp)

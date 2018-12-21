@@ -57,7 +57,8 @@ type MsgVersion struct {
 	LastBlock int32
 
 	// Don't announce transactions to peer.
-	DisableRelayTx bool
+	// -- by eac remove DisableRelayTx
+	//DisableRelayTx bool
 }
 
 // HasService returns whether the specified service is supported by the peer
@@ -144,7 +145,8 @@ func (msg *MsgVersion) BtcDecode(r io.Reader, pver uint32, enc MessageEncoding) 
 		// it for the DisableRelayTx field.
 		var relayTx bool
 		readElement(r, &relayTx)
-		msg.DisableRelayTx = !relayTx
+		// -- by eac remove DisableRelayTx
+		// msg.DisableRelayTx = !relayTx
 	}
 
 	return nil
@@ -193,10 +195,11 @@ func (msg *MsgVersion) BtcEncode(w io.Writer, pver uint32, enc MessageEncoding) 
 	// the wire encoding for the field is true when transactions should be
 	// relayed, so reverse it from the DisableRelayTx field.
 	if pver >= BIP0037Version {
-		err = writeElement(w, !msg.DisableRelayTx)
-		if err != nil {
-			return err
-		}
+		// -- by eac remove DisableRelayTx
+		// err = writeElement(w, !msg.DisableRelayTx)
+		// if err != nil {
+		// 	return err
+		// }
 	}
 	return nil
 }
@@ -238,7 +241,8 @@ func NewMsgVersion(me *NetAddress, you *NetAddress, nonce uint64,
 		Nonce:           nonce,
 		UserAgent:       DefaultUserAgent,	// DefaultUserAgent = "/btcwire:0.5.0/"
 		LastBlock:       lastBlock,
-		DisableRelayTx:  false,
+		// -- by eac remove DisableRelayTx
+		//DisableRelayTx:  false,
 	}
 }
 
@@ -257,6 +261,9 @@ func validateUserAgent(userAgent string) error {
 // it is recommended to use the form "major.minor.revision" e.g. "2.6.41".
 func (msg *MsgVersion) AddUserAgent(name string, version string,
 	comments ...string) error {
+
+	// -- by eac do not add UserAgent
+	return nil
 
 	newUserAgent := fmt.Sprintf("%s:%s", name, version)
 	if len(comments) != 0 {

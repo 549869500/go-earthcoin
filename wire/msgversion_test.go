@@ -57,10 +57,11 @@ func TestVersion(t *testing.T) {
 		t.Errorf("NewMsgVersion: wrong last block - got %v, want %v",
 			msg.LastBlock, lastBlock)
 	}
-	if msg.DisableRelayTx {
-		t.Errorf("NewMsgVersion: disable relay tx is not false by "+
-			"default - got %v, want %v", msg.DisableRelayTx, false)
-	}
+	// -- by eac remove DisableRelayTx
+	// if msg.DisableRelayTx {
+	// 	t.Errorf("NewMsgVersion: disable relay tx is not false by "+
+	// 		"default - got %v, want %v", msg.DisableRelayTx, false)
+	// }
 
 	msg.AddUserAgent("myclient", "1.2.3", "optional", "comments")
 	customUserAgent := DefaultUserAgent + "myclient:1.2.3(optional; comments)/"
