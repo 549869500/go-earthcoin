@@ -16,7 +16,7 @@ const (
 	// -- by btc
 	//ProtocolVersion uint32 = 70013
 	// -- by eac
-	ProtocolVersion uint32 = 70016
+	ProtocolVersion uint32 = 70015
 
 	// MultipleAddressVersion is the protocol version which added multiple
 	// addresses per message (pver >= MultipleAddressVersion).

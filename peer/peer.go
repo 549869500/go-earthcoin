@@ -2244,6 +2244,7 @@ func (p *Peer) readRemoteVersionMsg() error {
 	// Notify and disconnect clients if the first message is not a version
 	// message.
 	msg, ok := remoteMsg.(*wire.MsgVersion)
+	
 	if !ok {
 		reason := "a version message must precede all others"
 		rejectMsg := wire.NewMsgReject(msg.Command(), wire.RejectMalformed,
@@ -2275,7 +2276,9 @@ func (p *Peer) readRemoteVersionMsg() error {
 	p.statsMtx.Lock()
 	p.lastBlock = msg.LastBlock
 	p.startingHeight = msg.LastBlock
+	// -- by eac 
 	p.timeOffset = msg.Timestamp.Unix() - time.Now().Unix()
+	//p.timeOffset = time.Now().Unix() - time.Now().Unix()
 	p.statsMtx.Unlock()
 
 	// Set the peer's ID, user agent, and potentially the flag which
@@ -2404,6 +2407,8 @@ func (p *Peer) localVersionMsg() (*wire.MsgVersion, error) {
 	// Advertise our max supported protocol version.
 	//宣传我们最大支持的协议版本。
 	msg.ProtocolVersion = int32(p.cfg.ProtocolVersion)
+
+	msg.Nonce = 0
 
 	// Advertise if inv messages for transactions are desired.
 	//如果需要用于事务的inv消息，则发布广告。

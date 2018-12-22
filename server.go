@@ -489,6 +489,7 @@ func (sp *serverPeer) OnVersion(_ *peer.Peer, msg *wire.MsgVersion) *wire.MsgRej
 	// Add the remote peer time as a sample for creating an offset against
 	// the local clock to keep the network time in sync.
 	sp.server.timeSource.AddTimeSample(sp.Addr(), msg.Timestamp)
+	
 
 	// Signal the sync manager this peer is a new sync candidate.
 	// 发信号通知同步管理器此对等体是新的同步候选者。

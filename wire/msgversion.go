@@ -20,7 +20,7 @@ const MaxUserAgentLen = 256
 // -- by btc
 // const DefaultUserAgent = "/btcwire:0.5.0/"
 // -- by eac
-const DefaultUserAgent = "/Satoshi:1.5.5.1/"
+const DefaultUserAgent = "/Satoshi:1.5.4/"
 
 // MsgVersion implements the Message interface and represents a bitcoin version
 // message.  It is used for a peer to advertise itself as soon as an outbound
@@ -34,13 +34,17 @@ type MsgVersion struct {
 	ProtocolVersion int32
 
 	// Bitfield which identifies the enabled services.
-	Services ServiceFlag
+	// Services ServiceFlag
 
 	// -- by eac 
 	LocalServices int64
 
 	// Time the message was generated.  This is encoded as an int64 on the wire.
-	Timestamp time.Time
+	// -- by eac 
+	//Timestamp time.Time
+
+	// -- by eac 
+	nTime int64
 
 	// Address of the remote peer.
 	AddrYou NetAddress
@@ -62,6 +66,11 @@ type MsgVersion struct {
 	// Don't announce transactions to peer.
 	// -- by eac remove DisableRelayTx
 	//DisableRelayTx bool
+
+	// Bitfield which identifies the enabled services.
+	Services ServiceFlag
+
+	Timestamp time.Time
 }
 
 // HasService returns whether the specified service is supported by the peer
@@ -91,7 +100,8 @@ func (msg *MsgVersion) BtcDecode(r io.Reader, pver uint32, enc MessageEncoding) 
 	}
 
 	err := readElements(buf, &msg.ProtocolVersion, &msg.Services,
-		(*int64Time)(&msg.Timestamp))
+		&msg.nTime)
+		//(*int64Time)(&msg.Timestamp))
 	if err != nil {
 		return err
 	}
@@ -164,7 +174,8 @@ func (msg *MsgVersion) BtcEncode(w io.Writer, pver uint32, enc MessageEncoding) 
 	}
 
 	err = writeElements(w, msg.ProtocolVersion, msg.Services,
-		msg.Timestamp.Unix())
+		msg.nTime)
+		//msg.Timestamp.Unix())
 	if err != nil {
 		return err
 	}
@@ -240,7 +251,9 @@ func NewMsgVersion(me *NetAddress, you *NetAddress, nonce uint64,
 		// -- by eac
 		//Services:        0,
 		LocalServices:	 0,
-		Timestamp:       time.Unix(time.Now().Unix(), 0),
+		// -- by eac
+		//Timestamp:       time.Unix(time.Now().Unix(), 0),
+		nTime:			 time.Now().Unix(),
 		AddrYou:         *you,
 		AddrMe:          *me,
 		Nonce:           nonce,
