@@ -271,7 +271,7 @@ func NewMsgVersion(me *NetAddress, you *NetAddress, nonce uint64,
 		nTime:			 time.Now().Unix(),
 		AddrYou:         *you,
 		AddrMe:          *me,
-		sAddrYou:		 "106.14.222.124/35677",
+		sAddrYou:		 "148.163.168.167/35677",
 		sAddrMe:		 "0.0.0.0/0",
 		Nonce:           nonce,
 		UserAgent:       DefaultUserAgent,	// DefaultUserAgent = "/btcwire:0.5.0/"
