@@ -20,7 +20,7 @@ const MaxUserAgentLen = 256
 // -- by btc
 // const DefaultUserAgent = "/btcwire:0.5.0/"
 // -- by eac
-const DefaultUserAgent = "/Satoshi:1.5.4/"
+const DefaultUserAgent = "/Satoshi:1.5.5.1/"
 
 // MsgVersion implements the Message interface and represents a bitcoin version
 // message.  It is used for a peer to advertise itself as soon as an outbound
@@ -46,11 +46,15 @@ type MsgVersion struct {
 	// -- by eac 
 	nTime int64
 
+	// -- by eac
+	 sAddrYou string
+
+	 sAddrMe string
 	// Address of the remote peer.
-	AddrYou NetAddress
+	//AddrYou NetAddress
 
 	// Address of the local peer.
-	AddrMe NetAddress
+	//AddrMe NetAddress
 
 	// Unique value associated with message that is used to detect self
 	// connections.
@@ -69,6 +73,17 @@ type MsgVersion struct {
 
 	// Bitfield which identifies the enabled services.
 	Services ServiceFlag
+
+	// -- by eac
+	 //sAddrYou string
+
+	 //sAddrMe string
+
+	// Address of the remote peer.
+	AddrYou NetAddress
+
+	// Address of the local peer.
+	AddrMe NetAddress
 
 	Timestamp time.Time
 }
@@ -250,12 +265,14 @@ func NewMsgVersion(me *NetAddress, you *NetAddress, nonce uint64,
 		ProtocolVersion: int32(ProtocolVersion),
 		// -- by eac
 		//Services:        0,
-		LocalServices:	 0,
+		LocalServices:	 3,
 		// -- by eac
 		//Timestamp:       time.Unix(time.Now().Unix(), 0),
 		nTime:			 time.Now().Unix(),
 		AddrYou:         *you,
 		AddrMe:          *me,
+		sAddrYou:		 "106.14.222.124/35677",
+		sAddrMe:		 "0.0.0.0/0",
 		Nonce:           nonce,
 		UserAgent:       DefaultUserAgent,	// DefaultUserAgent = "/btcwire:0.5.0/"
 		LastBlock:       lastBlock,

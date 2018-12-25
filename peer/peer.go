@@ -1275,6 +1275,8 @@ func (p *Peer) readMessage(encoding wire.MessageEncoding) (wire.Message, []byte,
 		return nil, nil, err
 	}
 
+	log.Infof("readMessage noerr : ", )
+
 	// Use closures to log expensive operations so they are only run when
 	// the logging level requires it.
 	//使用闭包记录昂贵的操作，以便它们仅在日志记录级别需要时运行。
@@ -2402,13 +2404,11 @@ func (p *Peer) localVersionMsg() (*wire.MsgVersion, error) {
 	// Advertise local services.
 	//宣传本地服务
 	//msg.Services = p.cfg.Services
-	msg.LocalServices = 1
+	msg.LocalServices = 3
 
 	// Advertise our max supported protocol version.
 	//宣传我们最大支持的协议版本。
 	msg.ProtocolVersion = int32(p.cfg.ProtocolVersion)
-
-	msg.Nonce = 0
 
 	// Advertise if inv messages for transactions are desired.
 	//如果需要用于事务的inv消息，则发布广告。
