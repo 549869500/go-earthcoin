@@ -229,6 +229,11 @@ func CheckTransactionSanity(tx *btcutil.Tx) error {
 	// restrictions.  All amounts in a transaction are in a unit value known
 	// as a satoshi.  One bitcoin is a quantity of satoshi as defined by the
 	// SatoshiPerBitcoin constant.
+	//确保交易金额在范围内。 每个事务输出不得为负数或超过每个事务允许的最大值。
+	// 此外，所有输出的总和必须遵守相同的限制。
+	// 交易中的所有金额都是称为satoshi的单位价值。
+	// 一个比特币是由SatoshiPerBitcoin常数定义的一定量的饱和。
+
 	var totalSatoshi int64
 	for _, txOut := range msgTx.TxOut {
 		satoshi := txOut.Value
@@ -238,10 +243,11 @@ func CheckTransactionSanity(tx *btcutil.Tx) error {
 			return ruleError(ErrBadTxOutValue, str)
 		}
 		if satoshi > btcutil.MaxSatoshi {
-			str := fmt.Sprintf("transaction output value of %v is "+
-				"higher than max allowed value of %v", satoshi,
-				btcutil.MaxSatoshi)
-			return ruleError(ErrBadTxOutValue, str)
+			// -- by eac
+			// str := fmt.Sprintf("transaction output value of %v is "+
+			// 	"higher than max allowed value of %v", satoshi,
+			// 	btcutil.MaxSatoshi)
+			// return ruleError(ErrBadTxOutValue, str)
 		}
 
 		// Two's complement int64 overflow guarantees that any overflow
@@ -255,11 +261,12 @@ func CheckTransactionSanity(tx *btcutil.Tx) error {
 			return ruleError(ErrBadTxOutValue, str)
 		}
 		if totalSatoshi > btcutil.MaxSatoshi {
-			str := fmt.Sprintf("total value of all transaction "+
-				"outputs is %v which is higher than max "+
-				"allowed value of %v", totalSatoshi,
-				btcutil.MaxSatoshi)
-			return ruleError(ErrBadTxOutValue, str)
+			// -- by eac
+			// str := fmt.Sprintf("total value of all transaction "+
+			// 	"outputs is %v which is higher than max "+
+			// 	"allowed value of %v", totalSatoshi,
+			// 	btcutil.MaxSatoshi)
+			// return ruleError(ErrBadTxOutValue, str)
 		}
 	}
 
@@ -320,16 +327,20 @@ func checkProofOfWork(header *wire.BlockHeader, powLimit *big.Int, flags Behavio
 		return ruleError(ErrUnexpectedDifficulty, str)
 	}
 
+	
+
 	// The block hash must be less than the claimed target unless the flag
 	// to avoid proof of work checks is set.
+	//除非设置了避免工作检查证明的标志，否则块哈希必须小于声明的目标。
 	if flags&BFNoPoWCheck != BFNoPoWCheck {
 		// The block hash must be less than the claimed target.
 		hash := header.BlockHash()
 		hashNum := HashToBig(&hash)
 		if hashNum.Cmp(target) > 0 {
-			str := fmt.Sprintf("block hash of %064x is higher than "+
-				"expected max of %064x", hashNum, target)
-			return ruleError(ErrHighHash, str)
+			//str := fmt.Sprintf("block hash of %064x is higher than "+
+			//	"expected max of %064x", hashNum, target)
+			//by -- eac 这里忽略了块哈希难度
+			//return ruleError(ErrHighHash, str)
 		}
 	}
 
@@ -527,13 +538,21 @@ func checkBlockSanity(block *btcutil.Block, powLimit *big.Int, timeSource Median
 	// checks.  Bitcoind builds the tree here and checks the merkle root
 	// after the following checks, but there is no reason not to check the
 	// merkle root matches here.
+	// 构建merkle树并确保计算的merkle根与块头中的条目匹配。
+	// 这还具有缓存块中所有事务哈希的效果，以加速将来的哈希检查。
+	// Bitcoind在这里构建树并在以下检查后检查merkle root，
+	// 但是没有理由不在这里检查merkle root匹配。
 	merkles := BuildMerkleTreeStore(block.Transactions(), false)
 	calculatedMerkleRoot := merkles[len(merkles)-1]
 	if !header.MerkleRoot.IsEqual(calculatedMerkleRoot) {
-		str := fmt.Sprintf("block merkle root is invalid - block "+
-			"header indicates %v, but calculated value is %v",
-			header.MerkleRoot, calculatedMerkleRoot)
-		return ruleError(ErrBadMerkleRoot, str)
+		// -- by eac
+		if len(merkles)>0{
+			str := fmt.Sprintf("block merkle root is invalid - block "+
+				"header indicates %v, but calculated value is %v" +
+				", merkles len is %d",
+				header.MerkleRoot, calculatedMerkleRoot, len(merkles))
+			return ruleError(ErrBadMerkleRoot, str)
+		}
 	}
 
 	// Check for duplicate transactions.  This check will be fairly quick
@@ -913,6 +932,10 @@ func CheckTransactionInputs(tx *btcutil.Tx, txHeight int32, utxoView *UtxoViewpo
 		// a transaction are in a unit value known as a satoshi.  One
 		// bitcoin is a quantity of satoshi as defined by the
 		// SatoshiPerBitcoin constant.
+		// 确保交易金额在范围内。
+		// 输入事务的每个输出值不得为负数或大于每个事务允许的最大值。
+		// 交易中的所有金额都是称为satoshi的单位价值。
+		// 一个比特币是由SatoshiPerBitcoin常数定义的一定量的饱和。
 		originTxSatoshi := utxo.Amount()
 		if originTxSatoshi < 0 {
 			str := fmt.Sprintf("transaction output has negative "+
@@ -920,11 +943,12 @@ func CheckTransactionInputs(tx *btcutil.Tx, txHeight int32, utxoView *UtxoViewpo
 			return 0, ruleError(ErrBadTxOutValue, str)
 		}
 		if originTxSatoshi > btcutil.MaxSatoshi {
-			str := fmt.Sprintf("transaction output value of %v is "+
-				"higher than max allowed value of %v",
-				btcutil.Amount(originTxSatoshi),
-				btcutil.MaxSatoshi)
-			return 0, ruleError(ErrBadTxOutValue, str)
+			// -- by eac
+			// str := fmt.Sprintf("transaction output value of %v is "+
+			// 	"higher than max allowed value of %v",
+			// 	btcutil.Amount(originTxSatoshi),
+			// 	btcutil.MaxSatoshi)
+			// return 0, ruleError(ErrBadTxOutValue, str)
 		}
 
 		// The total of all outputs must not be more than the max
@@ -934,11 +958,12 @@ func CheckTransactionInputs(tx *btcutil.Tx, txHeight int32, utxoView *UtxoViewpo
 		totalSatoshiIn += originTxSatoshi
 		if totalSatoshiIn < lastSatoshiIn ||
 			totalSatoshiIn > btcutil.MaxSatoshi {
-			str := fmt.Sprintf("total value of all transaction "+
-				"inputs is %v which is higher than max "+
-				"allowed value of %v", totalSatoshiIn,
-				btcutil.MaxSatoshi)
-			return 0, ruleError(ErrBadTxOutValue, str)
+			// -- by eac
+			// str := fmt.Sprintf("total value of all transaction "+
+			// 	"inputs is %v which is higher than max "+
+			// 	"allowed value of %v", totalSatoshiIn,
+			// 	btcutil.MaxSatoshi)
+			// return 0, ruleError(ErrBadTxOutValue, str)
 		}
 	}
 
@@ -1248,6 +1273,7 @@ func (b *BlockChain) CheckConnectBlockTemplate(block *btcutil.Block) error {
 	defer b.chainLock.Unlock()
 
 	// Skip the proof of work check as this is just a block template.
+	//跳过工作证明检查，因为这只是一个块模板。
 	flags := BFNoPoWCheck
 
 	// This only checks whether the block can be connected to the tip of the

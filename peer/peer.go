@@ -2254,7 +2254,7 @@ func (p *Peer) readRemoteVersionMsg() error {
 		_ = p.writeMessage(rejectMsg, wire.LatestEncoding)
 		return errors.New(reason)
 	}
-	log.Infof("start readRemoteVersionMsg a %s", p)
+	
 	// Detect self connections.
 	if !allowSelfConns && sentNonces.Exists(msg.Nonce) {
 		return errors.New("disconnecting peer connected to self")
@@ -2271,7 +2271,6 @@ func (p *Peer) readRemoteVersionMsg() error {
 	log.Debugf("Negotiated protocol version %d for peer %s",
 		p.protocolVersion, p)
 
-	log.Infof("start readRemoteVersionMsg b %s", p)
 
 	// Updating a bunch of stats including block based stats, and the
 	// peer's time offset.

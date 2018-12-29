@@ -1,3 +1,4 @@
 {
- 
+   //  - onWindowChange: 窗口失去焦点时自动保存更新后的文件。
+   "files.autoSave": "off",
 }

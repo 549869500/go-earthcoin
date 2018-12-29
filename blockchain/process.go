@@ -27,6 +27,8 @@ const (
 	// BFNoPoWCheck may be set to indicate the proof of work check which
 	// ensures a block hashes to a value less than the required target will
 	// not be performed.
+	//可以设置BFNoPoWCheck以指示工作校验，以确保块哈希值小于不执行所需目标的值。
+	//	BFNoPoWCheck = false ，就不检查块哈希的pow
 	BFNoPoWCheck
 
 	// BFNone is a convenience value to specifically indicate no flags.
