@@ -61,12 +61,15 @@ func (invtype InvType) String() string {
 // InvVect defines a bitcoin inventory vector which is used to describe data,
 // as specified by the Type field, that a peer wants, has, or does not have to
 // another peer.
+// InvVect定义比特币库存向量，用于描述对等体想要，
+// 拥有或不具有另一个对等体的类型字段所指定的数据。
 type InvVect struct {
 	Type InvType        // Type of data
 	Hash chainhash.Hash // Hash of the data
 }
 
 // NewInvVect returns a new InvVect using the provided type and hash.
+// NewInvVect使用提供的类型和哈希返回一个新的InvVect。
 func NewInvVect(typ InvType, hash *chainhash.Hash) *InvVect {
 	return &InvVect{
 		Type: typ,

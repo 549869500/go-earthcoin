@@ -45,6 +45,16 @@ var (
 // integers that automatically obtain a buffer from the free list, perform the
 // necessary binary conversion, read from or write to the given io.Reader or
 // io.Writer, and return the buffer to the free list.
+// binaryFreeList定义一个并发的安全空闲字节切片列表
+//（最多为binaryFreeListMaxItems常量定义的最大数量），
+//其上限为8（因此它最多支持uint64）。 
+// 它用于提供临时缓冲区，用于将原始数字序列化和反序列化为二进制编码，
+// 以便大大减少所需的分配数量。
+//
+//为方便起见，为每个原始无符号整数提供函数，
+// 这些函数自动从空闲列表中获取缓冲区，执行必要的二进制转换，
+//读取或写入给定的io.Reader或io.Writer，并返回缓冲区
+// 到免费清单。
 type binaryFreeList chan []byte
 
 // Borrow returns a byte slice from the free list with a length of 8.  A new
@@ -169,6 +179,8 @@ func (l binaryFreeList) PutUint64(w io.Writer, byteOrder binary.ByteOrder, val u
 
 // binarySerializer provides a free list of buffers to use for serializing and
 // deserializing primitive integer values to and from io.Readers and io.Writers.
+// binarySerializer提供了一个空闲的缓冲区列表，
+// 用于序列化和反序列化与io.Readers和io.Writers之间的原始整数值。
 var binarySerializer binaryFreeList = make(chan []byte, binaryFreeListMaxItems)
 
 // errNonCanonicalVarInt is the common format string used for non-canonically
@@ -473,15 +485,20 @@ func writeElements(w io.Writer, elements ...interface{}) error {
 }
 
 // ReadVarInt reads a variable length integer from r and returns it as a uint64.
+// ReadVarInt从r读取一个可变长度的整数，并将其作为uint64返回。
 func ReadVarInt(r io.Reader, pver uint32) (uint64, error) {
+	//log.Infof("Start ReadVarInt ： 0xff")
 	discriminant, err := binarySerializer.Uint8(r)
 	if err != nil {
 		return 0, err
 	}
 
+	//log.Infof("Start ReadVarInt ： discrimiant: %s",discriminant)
+
 	var rv uint64
 	switch discriminant {
 	case 0xff:
+		//log.Infof("ReadVarInt ： 0xff")
 		sv, err := binarySerializer.Uint64(r, littleEndian)
 		if err != nil {
 			return 0, err
@@ -497,6 +514,7 @@ func ReadVarInt(r io.Reader, pver uint32) (uint64, error) {
 		}
 
 	case 0xfe:
+		//log.Infof("ReadVarInt ： 0xfe")
 		sv, err := binarySerializer.Uint32(r, littleEndian)
 		if err != nil {
 			return 0, err
@@ -512,6 +530,7 @@ func ReadVarInt(r io.Reader, pver uint32) (uint64, error) {
 		}
 
 	case 0xfd:
+		//log.Infof("ReadVarInt ： 0xfd")
 		sv, err := binarySerializer.Uint16(r, littleEndian)
 		if err != nil {
 			return 0, err
@@ -527,6 +546,7 @@ func ReadVarInt(r io.Reader, pver uint32) (uint64, error) {
 		}
 
 	default:
+		//log.Infof("ReadVarInt ： default")
 		rv = uint64(discriminant)
 	}
 
@@ -645,8 +665,9 @@ func ReadVarBytes(r io.Reader, pver uint32, maxAllowed uint32,
 	// Prevent byte array larger than the max message size.  It would
 	// be possible to cause memory exhaustion and panics without a sane
 	// upper bound on this count.
+	//防止字节数组大于最大邮件大小。 有可能导致内存耗尽和恐慌而没有这个计数的合理上限。
 	if count > uint64(maxAllowed) {
-		str := fmt.Sprintf("%s is larger than the max allowed size "+
+		str := fmt.Sprintf("%s is larger than the max allowed size: "+
 			"[count %d, max %d]", fieldName, count, maxAllowed)
 		return nil, messageError("ReadVarBytes", str)
 	}

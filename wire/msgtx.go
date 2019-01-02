@@ -520,6 +520,7 @@ func (msg *MsgTx) BtcDecode(r io.Reader, pver uint32, enc MessageEncoding) error
 	// Deserialize the outputs.
 	txOuts := make([]TxOut, count)
 	msg.TxOut = make([]*TxOut, count)
+	//遍历读取TxOut对象
 	for i := uint64(0); i < count; i++ {
 		// The pointer is set now in case a script buffer is borrowed
 		// and needs to be returned to the pool on error.
@@ -926,6 +927,11 @@ func writeOutPoint(w io.Writer, pver uint32, version int32, op *OutPoint) error 
 // memory exhaustion attacks and forced panics through malformed messages.  The
 // fieldName parameter is only used for the error message so it provides more
 // context in the error.
+// readScript读取表示事务脚本的可变长度字节数组。
+// 它被编码为varInt，包含数组的长度，后跟字节本身。
+// 如果长度大于传递的maxAllowed参数，则会返回错误，
+// 该参数有助于防止内存耗尽攻击并通过格式错误的消息强制恐慌。
+// fieldName参数仅用于错误消息，因此它在错误中提供了更多上下文。
 func readScript(r io.Reader, pver uint32, maxAllowed uint32, fieldName string) ([]byte, error) {
 	count, err := ReadVarInt(r, pver)
 	if err != nil {
@@ -935,6 +941,7 @@ func readScript(r io.Reader, pver uint32, maxAllowed uint32, fieldName string) (
 	// Prevent byte array larger than the max message size.  It would
 	// be possible to cause memory exhaustion and panics without a sane
 	// upper bound on this count.
+	//防止字节数组大于最大邮件大小。 有可能导致内存耗尽和恐慌而没有这个计数的合理上限。
 	if count > uint64(maxAllowed) {
 		str := fmt.Sprintf("%s is larger than the max allowed size "+
 			"[count %d, max %d]", fieldName, count, maxAllowed)
@@ -985,6 +992,7 @@ func writeTxIn(w io.Writer, pver uint32, version int32, ti *TxIn) error {
 
 // readTxOut reads the next sequence of bytes from r as a transaction output
 // (TxOut).
+// readTxOut从r读取下一个字节序列作为事务输出（TxOut）。
 func readTxOut(r io.Reader, pver uint32, version int32, to *TxOut) error {
 	err := readElement(r, &to.Value)
 	if err != nil {

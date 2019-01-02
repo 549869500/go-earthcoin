@@ -1307,6 +1307,9 @@ func (b *BlockChain) BlockLocatorFromHash(hash *chainhash.Hash) BlockLocator {
 // main (best) chain.
 //
 // This function is safe for concurrent access.
+// LatestBlockLocator返回主要（最佳）链的最新已知提示的块定位器。
+//
+//此函数对于并发访问是安全的。
 func (b *BlockChain) LatestBlockLocator() (BlockLocator, error) {
 	b.chainLock.RLock()
 	locator := b.bestChain.BlockLocator(nil)

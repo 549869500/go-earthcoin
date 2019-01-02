@@ -369,11 +369,20 @@ func (sm *SyncManager) startSync() {
 			best.Height < sm.nextCheckpoint.Height &&
 			sm.chainParams != &chaincfg.RegressionNetParams {
 
+			// -- by eac
+			// if best.Height > 1{
+			// 	prevHash := sm.nextCheckpoint.Hash
+			// 	sm.chain.chainLock.RLock()
+			// 	//locator = blockchain.BlockLocator([]*chainhash.Hash{prevHash})
+			// 	locator = sm.chain.bestChain.BlockLocator([]*chainhash.Hash{prevHash})
+			// 	sm.chain.chainLock.RUnLock()
+			// }
+			
 			bestPeer.PushGetHeadersMsg(locator, sm.nextCheckpoint.Hash)
 			sm.headersFirstMode = true
-			log.Infof("Downloading headers for blocks %d to "+
-				"%d from peer %s", best.Height+1,
-				sm.nextCheckpoint.Height, bestPeer.Addr())
+			log.Infof("Downloading headers for blocks: %d from %d locator len: %d to "+
+				"%d hash: %s from peer %s", best.Height+1, locator[0], len(locator),
+				sm.nextCheckpoint.Height, sm.nextCheckpoint.Hash, bestPeer.Addr())
 		} else {
 			bestPeer.PushGetBlocksMsg(locator, &zeroHash)
 		}
@@ -608,6 +617,9 @@ func (sm *SyncManager) current() bool {
 // handleBlockMsg handles block messages from all peers.
 // handleBlockMsg处理来自所有节点的阻止消息。
 func (sm *SyncManager) handleBlockMsg(bmsg *blockMsg) {
+	
+	log.Infof("start handleBlockMsg peer %s", bmsg.peer)
+
 	peer := bmsg.peer
 	state, exists := sm.peerStates[peer]
 	if !exists {
@@ -812,8 +824,10 @@ func (sm *SyncManager) handleBlockMsg(bmsg *blockMsg) {
 				"peer %s: %v", peer.Addr(), err)
 			return
 		}
-		log.Infof("Downloading headers for blocks %d to %d from "+
-			"peer %s", prevHeight+1, sm.nextCheckpoint.Height,
+		log.Infof("Downloading headers for blocks %d from %d locator " +
+		    "len: %d to %d hash: %s from "+
+			"peer %s", prevHeight+1,  locator[0], len(locator),
+			sm.nextCheckpoint.Height, sm.nextCheckpoint.Hash,
 			sm.syncPeer.Addr())
 		return
 	}
@@ -851,22 +865,30 @@ func (sm *SyncManager) fetchHeaderBlocks() {
 	// the function, so no need to double check it here.
 	//为标题描述的块列表构建getdata请求。
 	// 大小提示将由函数限制为wire.MaxInvPerMsg，因此无需在此处仔细检查。
+	log.Infof("Start NewMsgGetDataSizeHint headerList.Len: %d", sm.headerList.Len()) 
 	gdmsg := wire.NewMsgGetDataSizeHint(uint(sm.headerList.Len()))
 	numRequested := 0
 	for e := sm.startHeader; e != nil; e = e.Next() {
 		node, ok := e.Value.(*headerNode)
 		if !ok {
 			log.Warn("Header list node type is not a headerNode")
+			log.Infof("Header list node type is not a headerNode")
 			continue
 		}
 
+		//新建空白的库存向量
 		iv := wire.NewInvVect(wire.InvTypeBlock, node.hash)
+		//判断本地数据库是否已存在库存向量
 		haveInv, err := sm.haveInventory(iv)
 		if err != nil {
 			log.Warnf("Unexpected failure when checking for "+
 				"existing inventory during header block "+
 				"fetch: %v", err)
+			log.Infof("Unexpected failure when checking for "+
+			"existing inventory during header block "+
+			"fetch: %v", err)
 		}
+		
 		if !haveInv {
 			syncPeerState := sm.peerStates[sm.syncPeer]
 
@@ -884,13 +906,18 @@ func (sm *SyncManager) fetchHeaderBlocks() {
 
 			gdmsg.AddInvVect(iv)
 			numRequested++
+
+			//log.Infof("End NewMsgGetDataSizeHint node.hash: %s", node.hash)
 		}
 		sm.startHeader = e.Next()
 		if numRequested >= wire.MaxInvPerMsg {
+			log.Infof("End NewMsgGetDataSizeHint numRequested >= wire.MaxInvPerMsg node.hash: %s", node.hash)
 			break
 		}
 	}
+	log.Infof("End NewMsgGetDataSizeHint len(gdmsg.InvList): %s", len(gdmsg.InvList))
 	if len(gdmsg.InvList) > 0 {
+		//向sync节点队列发出消息
 		sm.syncPeer.QueueMessage(gdmsg, nil)
 	}
 }
@@ -907,6 +934,7 @@ func (sm *SyncManager) handleHeadersMsg(hmsg *headersMsg) {
 	}
 
 	// The remote peer is misbehaving if we didn't request headers.
+	//如果我们没有请求标头，则远程对等方行为不端。
 	msg := hmsg.headers
 	numHeaders := len(msg.Headers)
 	if !sm.headersFirstMode {
@@ -917,12 +945,14 @@ func (sm *SyncManager) handleHeadersMsg(hmsg *headersMsg) {
 	}
 
 	// Nothing to do for an empty headers message.
+	//没有关于空标题消息的事情。
 	if numHeaders == 0 {
 		return
 	}
 
 	// Process all of the received headers ensuring each one connects to the
 	// previous and that checkpoints match.
+	//处理所有收到的标头，确保每个标头连接到前一个并且检查点匹配。
 	receivedCheckpoint := false
 	var finalHash *chainhash.Hash
 	for _, blockHeader := range msg.Headers {
@@ -930,6 +960,7 @@ func (sm *SyncManager) handleHeadersMsg(hmsg *headersMsg) {
 		finalHash = &blockHash
 
 		// Ensure there is a previous header to compare against.
+		//确保有一个要比较的上一个标题。
 		prevNodeEl := sm.headerList.Back()
 		if prevNodeEl == nil {
 			log.Warnf("Header list does not contain a previous" +
@@ -940,6 +971,7 @@ func (sm *SyncManager) handleHeadersMsg(hmsg *headersMsg) {
 
 		// Ensure the header properly connects to the previous one and
 		// add it to the list of headers.
+		//确保标题正确连接到上一个标题并将其添加到标题列表中。
 		node := headerNode{hash: &blockHash}
 		prevNode := prevNodeEl.Value.(*headerNode)
 		if prevNode.hash.IsEqual(&blockHeader.PrevBlock) {
@@ -957,6 +989,7 @@ func (sm *SyncManager) handleHeadersMsg(hmsg *headersMsg) {
 		}
 
 		// Verify the header at the next checkpoint height matches.
+		//验证下一个检查点高度匹配的标题
 		if node.height == sm.nextCheckpoint.Height {
 			if node.hash.IsEqual(sm.nextCheckpoint.Hash) {
 				receivedCheckpoint = true
@@ -991,6 +1024,7 @@ func (sm *SyncManager) handleHeadersMsg(hmsg *headersMsg) {
 		log.Infof("Received %v block headers: Fetching blocks",
 			sm.headerList.Len())
 		sm.progressLogger.SetLastLogTime(time.Now())
+		//获取标头的区块
 		sm.fetchHeaderBlocks()
 		return
 	}
@@ -999,13 +1033,24 @@ func (sm *SyncManager) handleHeadersMsg(hmsg *headersMsg) {
 	// headers starting from the latest known header and ending with the
 	// next checkpoint.
 	//此标头不是检查点，因此从最新的已知标头开始请求下一批标头，并以下一个检查点结束。
-	locator := blockchain.BlockLocator([]*chainhash.Hash{finalHash})
-	err := peer.PushGetHeadersMsg(locator, sm.nextCheckpoint.Hash)
-	if err != nil {
-		log.Warnf("Failed to send getheaders message to "+
-			"peer %s: %v", peer.Addr(), err)
-		return
-	}
+	// -- by eac debug
+	log.Infof("disenabled send getheaders message from hash: %s ", finalHash)
+	//if sm.nextCheckpoint.Height{
+		locator := blockchain.BlockLocator([]*chainhash.Hash{finalHash})
+		err := peer.PushGetHeadersMsg(locator, sm.nextCheckpoint.Hash)
+
+		log.Infof("send getheaders message from %d locator " +
+		"len: %d to %d hash: %s from "+
+		"peer %s",  locator[0], len(locator),
+		sm.nextCheckpoint.Height, sm.nextCheckpoint.Hash,
+		sm.syncPeer.Addr())
+
+		if err != nil {
+			log.Warnf("Failed to send getheaders message to "+
+				"peer %s: %v", peer.Addr(), err)
+			return
+		}
+	//}
 }
 
 // haveInventory returns whether or not the inventory represented by the passed

@@ -24,7 +24,11 @@ const CommandSize = 12
 
 // MaxMessagePayload is the maximum bytes a message can be regardless of other
 // individual limits imposed by messages themselves.
+// MaxMessagePayload是消息本身的最大字节数，与消息本身强加的其他个别限制无关。
+// -- by btc
 const MaxMessagePayload = (1024 * 1024 * 32) // 32MB
+// -- by eac
+//const MaxMessagePayload = (1024 * 1024 * 1024 * 1024 * 1024 * 1024 * 32) 
 
 // Commands used in bitcoin message headers which describe the type of message.
 const (

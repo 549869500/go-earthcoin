@@ -19,6 +19,13 @@ import (
 //
 // Use the AddInvVect function to build up the list of inventory vectors when
 // sending a getdata message to another peer.
+// MsgGetData实现Message接口并表示比特币getdata消息。 
+// 它用于从另一个对等方请求数据，例如块和事务。
+// 它应该用于响应inv（MsgInv）消息，以请求接收对等方尚未拥有的每个清单向量引用的实际数据。
+// 每条消息都限制为最大数量的库存向量，目前为50,000。
+// 因此，必须使用多条消息来请求更大量的数据。
+//
+// 在向另一个对等方发送getdata消息时，使用AddInvVect函数建立清单向量列表。
 type MsgGetData struct {
 	InvList []*InvVect
 }
@@ -121,6 +128,13 @@ func NewMsgGetData() *MsgGetData {
 // hint is just that - a hint that is used for the default allocation size.
 // Adding more (or less) inventory vectors will still work properly.  The size
 // hint is limited to MaxInvPerMsg.
+// NewMsgGetDataSizeHint返回符合Message接口的新比特币getdata消息。
+// 有关详细信息，请参阅MsgGetData。 此函数与NewMsgGetData的不同之处在于，
+// 它允许包含清单向量列表的后备阵列的默认分配大小。
+// 这允许调用者事先知道库存清单将增加多大，
+// 以避免在使用AddInvVect追加大量库存向量时多次增加内部支持阵列的开销。
+// 请注意，指定的提示就是 - 一个用于默认分配大小的提示。
+// 添加更多（或更少）的库存向量仍然可以正常工作。 大小提示仅限于MaxInvPerMsg。
 func NewMsgGetDataSizeHint(sizeHint uint) *MsgGetData {
 	// Limit the specified hint to the maximum allow per message.
 	if sizeHint > MaxInvPerMsg {

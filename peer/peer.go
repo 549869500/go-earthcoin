@@ -1124,9 +1124,10 @@ func (p *Peer) PushGetBlocksMsg(locator blockchain.BlockLocator, stopHash *chain
 // and stop hash.  It will ignore back-to-back duplicate requests.
 //
 // This function is safe for concurrent access.
-// PushGetHeadersMsg为提供的块定位器发送getblocks消息并停止哈希。 它将忽略背对背的重复请求。
+// PushGetHeadersMsg为提供的块定位器发送getblocks消息并停止哈希。
+// 它将忽略背对背的重复请求。
 //
-//此函数对于并发访问是安全的。
+// 此函数对于并发访问是安全的。
 func (p *Peer) PushGetHeadersMsg(locator blockchain.BlockLocator, stopHash *chainhash.Hash) error {
 	// Extract the begin hash from the block locator, if one was specified,
 	// to use for filtering duplicate getheaders requests.
@@ -1145,6 +1146,8 @@ func (p *Peer) PushGetHeadersMsg(locator blockchain.BlockLocator, stopHash *chai
 	p.prevGetHdrsMtx.Unlock()
 
 	if isDuplicate {
+		log.Infof("Filtering duplicate [getheaders] with begin hash %v",
+		beginHash)
 		log.Tracef("Filtering duplicate [getheaders] with begin hash %v",
 			beginHash)
 		return nil
@@ -1167,6 +1170,7 @@ func (p *Peer) PushGetHeadersMsg(locator blockchain.BlockLocator, stopHash *chai
 	p.prevGetHdrsBegin = beginHash
 	p.prevGetHdrsStop = stopHash
 	p.prevGetHdrsMtx.Unlock()
+	log.Infof("PushGetHeadersMsg: beginHash: %s , stopHash: %s" ,beginHash, stopHash)
 	return nil
 }
 
@@ -1286,7 +1290,7 @@ func (p *Peer) readMessage(encoding wire.MessageEncoding) (wire.Message, []byte,
 		if len(summary) > 0 {
 			summary = " (" + summary + ")"
 		}
-		return fmt.Sprintf("Received %v%s from %s",
+		return fmt.Sprintf(".Received %v%s from %s",
 			msg.Command(), summary, p)
 	}))
 
@@ -1296,7 +1300,7 @@ func (p *Peer) readMessage(encoding wire.MessageEncoding) (wire.Message, []byte,
 		if len(summary) > 0 {
 			summary = " (" + summary + ")"
 		}
-		return fmt.Sprintf("Received %v%s from %s",
+		return fmt.Sprintf("..Received %v%s from %s",
 			msg.Command(), summary, p)
 	}))
 
