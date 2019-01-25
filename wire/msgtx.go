@@ -454,7 +454,7 @@ func (msg *MsgTx) BtcDecode(r io.Reader, pver uint32, enc MessageEncoding) error
 		return err
 	}
 
-	log.Printf("txIn count: %d ", count)
+
 
 	// A count of zero (meaning no TxIn's to the uninitiated) indicates
 	// this is a transaction with witness data.
@@ -522,6 +522,8 @@ func (msg *MsgTx) BtcDecode(r io.Reader, pver uint32, enc MessageEncoding) error
 		}
 	}
 
+	log.Printf("txIn count: %d ", count)
+	
 	// Deserialize the inputs.
 	var totalScriptSize uint64
 	txIns := make([]TxIn, count)
