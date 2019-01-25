@@ -166,6 +166,7 @@ func (b *BlockChain) ProcessBlock(block *btcutil.Block, flags BehaviorFlags) (bo
 		return false, false, ruleError(ErrDuplicateBlock, str)
 	}
 
+	log.Infof("ProcessBlock: checkBlockSanity:")
 	// Perform preliminary sanity checks on the block and its transactions.
 	err = checkBlockSanity(block, b.chainParams.PowLimit, b.timeSource, flags)
 	if err != nil {

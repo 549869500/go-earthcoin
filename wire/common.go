@@ -11,9 +11,11 @@ import (
 	"io"
 	"math"
 	"time"
+	"log"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 )
+
 
 const (
 	// MaxVarIntPayload is the maximum payload size for a variable length integer.
@@ -59,6 +61,9 @@ type binaryFreeList chan []byte
 
 // Borrow returns a byte slice from the free list with a length of 8.  A new
 // buffer is allocated if there are not any available on the free list.
+// Borrow从空闲列表中返回一个长度为8的字节片。如果空闲列表中没有任何可用的缓冲区，则分配新的缓冲区。
+// Borrow()和Return()方法中，select复用均添加了default分支，
+// 故在“缓存池”空时申请或者“缓存池”满时释放均不会阻塞。
 func (l binaryFreeList) Borrow() []byte {
 	var buf []byte
 	select {
@@ -66,11 +71,15 @@ func (l binaryFreeList) Borrow() []byte {
 	default:
 		buf = make([]byte, 8)
 	}
+	//从“缓存池”中申请的byte slice的容量为8字节，即最大可以支持uint64类型的缓存。
 	return buf[:8]
 }
 
 // Return puts the provided byte slice back on the free list.  The buffer MUST
 // have been obtained via the Borrow function and therefore have a cap of 8.
+//返回将提供的字节切片放回到空闲列表中。 缓冲区必须通过Borrow函数获得，因此上限为8。
+// Borrow()和Return()方法中，select复用均添加了default分支，
+// 故在“缓存池”空时申请或者“缓存池”满时释放均不会阻塞。
 func (l binaryFreeList) Return(buf []byte) {
 	select {
 	case l <- buf:
@@ -147,6 +156,8 @@ func (l binaryFreeList) PutUint8(w io.Writer, val uint8) error {
 // PutUint16 serializes the provided uint16 using the given byte order into a
 // buffer from the free list and writes the resulting two bytes to the given
 // writer.
+// PutUint16使用给定的字节顺序将提供的uint16序列化为空闲列表中的缓冲区，
+// 并将得到的两个字节写入给定的writer。
 func (l binaryFreeList) PutUint16(w io.Writer, byteOrder binary.ByteOrder, val uint16) error {
 	buf := l.Borrow()[:2]
 	byteOrder.PutUint16(buf, val)
@@ -181,6 +192,14 @@ func (l binaryFreeList) PutUint64(w io.Writer, byteOrder binary.ByteOrder, val u
 // deserializing primitive integer values to and from io.Readers and io.Writers.
 // binarySerializer提供了一个空闲的缓冲区列表，
 // 用于序列化和反序列化与io.Readers和io.Writers之间的原始整数值。
+
+// binarySerializer是一个缓冲为1024个容量为8字节的byte slice管道，
+// 这里它并不用来在协程之间通信，而是作一个缓存队列使用。
+// 为了避免序列化或反序列化基础数据类型时频数地分配或者释放内存，
+// binarySerializer提供了一个大小固定的“缓存池”，当需要缓存时，
+// 向“缓存池”“借”指定大小的的byte slice，使用完毕后“归还”。
+// 然而，尽管“缓存池”的大小固定，当它分配完毕后，后续的申请并不会被阻塞，
+// 而是从内存直接分配，使用完毕后交由gc回收。
 var binarySerializer binaryFreeList = make(chan []byte, binaryFreeListMaxItems)
 
 // errNonCanonicalVarInt is the common format string used for non-canonically
@@ -200,11 +219,17 @@ type int64Time time.Time
 
 // readElement reads the next sequence of bytes from r using little endian
 // depending on the concrete type of element pointed to.
+// readElement使用little endian从r读取下一个字节序列，具体取决于指向的具体元素类型。
 func readElement(r io.Reader, element interface{}) error {
 	// Attempt to read the element based on the concrete type via fast
 	// type assertions first.
+	//首先通过快速类型断言尝试根据具体类型读取元素。
+	//主要过程是通过类型断言(type assertion)解析欲读取字节对应的数据类型，
+	//然后根据类型的size读出字节slice，并进行强制类型转换后得到格式化的数据
 	switch e := element.(type) {
 	case *int32:
+		//binarySerializer是一个缓冲为1024个容量为8字节的byte slice管道，
+		//这里它并不用来在协程之间通信，而是作一个缓存队列使用。
 		rv, err := binarySerializer.Uint32(r, littleEndian)
 		if err != nil {
 			return err
@@ -221,18 +246,23 @@ func readElement(r io.Reader, element interface{}) error {
 		return nil
 
 	case *int64:
+		
 		rv, err := binarySerializer.Uint64(r, littleEndian)
 		if err != nil {
 			return err
 		}
+		log.Print("start ReadElement type: int64, rv: %d ", rv);
 		*e = int64(rv)
+		log.Print("end ReadElement type: int64, rv: %d ，*e： %d ", rv, *e);
 		return nil
 
 	case *uint64:
+		
 		rv, err := binarySerializer.Uint64(r, littleEndian)
 		if err != nil {
 			return err
 		}
+		log.Print("ReadElement type: uint64, rv: %d", rv);
 		*e = rv
 		return nil
 
@@ -487,18 +517,18 @@ func writeElements(w io.Writer, elements ...interface{}) error {
 // ReadVarInt reads a variable length integer from r and returns it as a uint64.
 // ReadVarInt从r读取一个可变长度的整数，并将其作为uint64返回。
 func ReadVarInt(r io.Reader, pver uint32) (uint64, error) {
-	//log.Infof("Start ReadVarInt ： 0xff")
 	discriminant, err := binarySerializer.Uint8(r)
 	if err != nil {
 		return 0, err
 	}
 
-	//log.Infof("Start ReadVarInt ： discrimiant: %s",discriminant)
+	vInt := ""
 
 	var rv uint64
 	switch discriminant {
+	// -- by eac 
 	case 0xff:
-		//log.Infof("ReadVarInt ： 0xff")
+		vInt = vInt + "__0xff"
 		sv, err := binarySerializer.Uint64(r, littleEndian)
 		if err != nil {
 			return 0, err
@@ -514,7 +544,7 @@ func ReadVarInt(r io.Reader, pver uint32) (uint64, error) {
 		}
 
 	case 0xfe:
-		//log.Infof("ReadVarInt ： 0xfe")
+		vInt = vInt + "__0xfe"
 		sv, err := binarySerializer.Uint32(r, littleEndian)
 		if err != nil {
 			return 0, err
@@ -530,7 +560,7 @@ func ReadVarInt(r io.Reader, pver uint32) (uint64, error) {
 		}
 
 	case 0xfd:
-		//log.Infof("ReadVarInt ： 0xfd")
+		vInt = vInt + "__0xfd"
 		sv, err := binarySerializer.Uint16(r, littleEndian)
 		if err != nil {
 			return 0, err
@@ -546,8 +576,12 @@ func ReadVarInt(r io.Reader, pver uint32) (uint64, error) {
 		}
 
 	default:
-		//log.Infof("ReadVarInt ： default")
+		vInt = vInt + "__default"
 		rv = uint64(discriminant)
+	}
+
+	if rv > 0 {
+		log.Print("ReadVarInt rv: %d, vInt %s ,discriminant: %d " ,rv ,vInt ,discriminant);
 	}
 
 	return rv, nil
@@ -555,6 +589,9 @@ func ReadVarInt(r io.Reader, pver uint32) (uint64, error) {
 
 // WriteVarInt serializes val to w using a variable number of bytes depending
 // on its value.
+//除了基础数据类型了，为了压缩传输数据量，bitcoin协议还定义了可变长度整数值
+//WriteVarInt()完全按照可变长度整数值的定义，根据整数值的大小范围将其编码成不同长度的字节序列。
+//ReadVarInt()是完全相反的过程
 func WriteVarInt(w io.Writer, pver uint32, val uint64) error {
 	if val < 0xfd {
 		return binarySerializer.PutUint8(w, uint8(val))

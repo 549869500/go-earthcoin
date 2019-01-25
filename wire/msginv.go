@@ -27,6 +27,15 @@ const defaultInvListAlloc = 1000
 //
 // Use the AddInvVect function to build up the list of inventory vectors when
 // sending an inv message to another peer.
+// MsgInv实现Message接口并表示比特币inv消息。
+// 它用于通过清单向量通告对等方的已知数据，例如块和事务。
+// 可以不主要地发送它以通知其他对等方数据或响应getblocks消息（MsgGetBlocks）。
+// 每条消息都限制为最大数量的库存向量，目前为50,000。
+//
+//在向另一个对等方发送inv消息时，使用AddInvVect函数构建清单向量列表。
+//
+//inv主要用来向Peer通告区块或者交易数据，它是getblocks消息的响应消息，也可以主动发送。
+//inv消息体包含一个InvVect列表和表示InvVect个数的可变长度整数Count值。
 type MsgInv struct {
 	InvList []*InvVect
 }

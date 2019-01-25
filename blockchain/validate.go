@@ -202,12 +202,16 @@ func CalcBlockSubsidy(height int32, chainParams *chaincfg.Params) int64 {
 
 // CheckTransactionSanity performs some preliminary checks on a transaction to
 // ensure it is sane.  These checks are context free.
+// CheckTransactionSanity对事务执行一些初步检查以确保它是理智的。 这些检查是无上下文的。
 func CheckTransactionSanity(tx *btcutil.Tx) error {
 	// A transaction must have at least one input.
+	//事务必须至少有一个输入。
 	msgTx := tx.MsgTx()
-	if len(msgTx.TxIn) == 0 {
-		return ruleError(ErrNoTxInputs, "transaction has no inputs")
-	}
+	log.Infof("CheckTransactionSanity: TxIn: %d",msgTx.TxIn)
+	// -- by eac
+	// if len(msgTx.TxIn) == 0 {
+	// 	return ruleError(ErrNoTxInputs, "transaction has no inputs.")
+	// }
 
 	// A transaction must have at least one output.
 	if len(msgTx.TxOut) == 0 {
@@ -238,6 +242,7 @@ func CheckTransactionSanity(tx *btcutil.Tx) error {
 	for _, txOut := range msgTx.TxOut {
 		satoshi := txOut.Value
 		if satoshi < 0 {
+			// -- by eac debug
 			str := fmt.Sprintf("transaction output has negative "+
 				"value of %v", satoshi)
 			return ruleError(ErrBadTxOutValue, str)
@@ -255,6 +260,7 @@ func CheckTransactionSanity(tx *btcutil.Tx) error {
 		// perhaps possible if an alt increases the total money supply.
 		totalSatoshi += satoshi
 		if totalSatoshi < 0 {
+			// -- by eac debug
 			str := fmt.Sprintf("total value of all transaction "+
 				"outputs exceeds max allowed value of %v",
 				btcutil.MaxSatoshi)
@@ -508,6 +514,8 @@ func checkBlockSanity(block *btcutil.Block, powLimit *big.Int, timeSource Median
 	}
 
 	// The first transaction in a block must be a coinbase.
+	log.Infof("len(block.msgBlock.Transactions): %d", len(msgBlock.Transactions))
+	//把block.msgBlock.Transactions,放到block.transactions里面并返回
 	transactions := block.Transactions()
 	if !IsCoinBase(transactions[0]) {
 		return ruleError(ErrFirstTxNotCoinbase, "first transaction in "+
@@ -591,6 +599,7 @@ func checkBlockSanity(block *btcutil.Block, powLimit *big.Int, timeSource Median
 // CheckBlockSanity performs some preliminary checks on a block to ensure it is
 // sane before continuing with block processing.  These checks are context free.
 func CheckBlockSanity(block *btcutil.Block, powLimit *big.Int, timeSource MedianTimeSource) error {
+	log.Infof("CheckBlockSanity: checkBlockSanity:")
 	return checkBlockSanity(block, powLimit, timeSource, BFNone)
 }
 
@@ -1286,6 +1295,7 @@ func (b *BlockChain) CheckConnectBlockTemplate(block *btcutil.Block) error {
 		return ruleError(ErrPrevBlockNotBest, str)
 	}
 
+	log.Infof("CheckConnectBlockTemplate: checkBlockSanity:")
 	err := checkBlockSanity(block, b.chainParams.PowLimit, b.timeSource, flags)
 	if err != nil {
 		return err

@@ -28,21 +28,28 @@ func maxNetAddressPayload(pver uint32) uint32 {
 
 // NetAddress defines information about a peer on the network including the time
 // it was last seen, the services it supports, its IP address, and port.
+// NetAddress定义有关网络上对等方的信息，包括上次查看的时间，它支持的服务，IP地址和端口。
 type NetAddress struct {
 	// Last time the address was seen.  This is, unfortunately, encoded as a
 	// uint32 on the wire and therefore is limited to 2106.  This field is
 	// not present in the bitcoin version message (MsgVersion) nor was it
 	// added until protocol version >= NetAddressTimeVersion.
+	//记录节点从“外部”获知该地址的最近时间点，该时刻离现在越早，说明该地址的“存活期”越长，
+	//对应地址失效的可能性就越大。
+	//值得注意的是，version消息里的发送端(AddrMe)和接收端地址(AddrYou)里并没有包含该字段;
 	Timestamp time.Time
 
 	// Bitfield which identifies the services supported by the address.
+	//表明节点支持的服务，也即节点类型，包含SFNodeNetwork、SFNodeGetUTXO和SFNodeBloom;
 	Services ServiceFlag
 
 	// IP address of the peer.
+	//IP地址;
 	IP net.IP
 
 	// Port the peer is using.  This is encoded in big endian on the wire
 	// which differs from most everything else.
+	//端口号;
 	Port uint16
 }
 

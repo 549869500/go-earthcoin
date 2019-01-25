@@ -32,10 +32,12 @@ type BlockHeader struct {
 
 	// Hash of the previous block header in the block chain.
 	//区块链中前一个块头的哈希值。
+	//链上前一个区块的Hash值，每个区块都通过该字段指向上一个区块，直到创世区块，从而形成链结构;
 	PrevBlock chainhash.Hash
 
 	// Merkle tree reference to hash of all transactions for the block.
 	//Merkle树引用块的所有事务的哈希(当前块的哈希)。
+	//该区块中所有交易Hash构成的Merkle树的树根的Hash，它包涵了区块中所有交易的信息
 	MerkleRoot chainhash.Hash
 
 	// Time the block was created.  This is, unfortunately, encoded as a
@@ -45,10 +47,12 @@ type BlockHeader struct {
 
 	// Difficulty target for the block.
 	//块的难度目标，在比特币里面，表示哈希值前面有多少个0。
+	//区块的目标难度值，“挖矿”的过程就是找到一个Nonce值使得区块Hash小于该值;
 	Bits uint32
 
 	// Nonce used to generate the block.
 	//Nonce用于生成块,工作量证明计数器。
+	//用于“挖矿”或验证区块难度的随机值;
 	Nonce uint32
 }
 

@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 )
@@ -61,6 +62,9 @@ func (msg *MsgBlock) ClearTransactions() {
 // This is part of the Message interface implementation.
 // See Deserialize for decoding blocks stored to disk, such as in a database, as
 // opposed to decoding blocks from the wire.
+// BtcDecode使用比特币协议编码将r解码到接收器中。
+//这是Message接口实现的一部分。
+//请参阅反序列化以解码存储到磁盘的块（例如在数据库中），而不是从线路解码块。
 func (msg *MsgBlock) BtcDecode(r io.Reader, pver uint32, enc MessageEncoding) error {
 	err := readBlockHeader(r, pver, &msg.Header)
 	if err != nil {
@@ -81,9 +85,11 @@ func (msg *MsgBlock) BtcDecode(r io.Reader, pver uint32, enc MessageEncoding) er
 		return messageError("MsgBlock.BtcDecode", str)
 	}
 
+	log.Printf("start msgblock - BtcDecode msg.Transactions:")
 	msg.Transactions = make([]*MsgTx, 0, txCount)
 	for i := uint64(0); i < txCount; i++ {
 		tx := MsgTx{}
+		log.Printf("start msgblock - BtcDecode tx.BtcDecode:")
 		err := tx.BtcDecode(r, pver, enc)
 		if err != nil {
 			return err
@@ -173,17 +179,24 @@ func (msg *MsgBlock) DeserializeTxLoc(r *bytes.Buffer) ([]TxLoc, error) {
 // This is part of the Message interface implementation.
 // See Serialize for encoding blocks to be stored to disk, such as in a
 // database, as opposed to encoding blocks for the wire.
+// BtcEncode使用比特币协议编码将接收器编码为w。
+//这是Message接口实现的一部分。
+//请参阅序列化以将编码块存储到磁盘（例如数据库中），而不是编码线路的块。
 func (msg *MsgBlock) BtcEncode(w io.Writer, pver uint32, enc MessageEncoding) error {
+	//可以看出，区块的序列化结构中包含区块头，表示交易数量的整数值和交易列表。
+	//写入区块头
 	err := writeBlockHeader(w, pver, &msg.Header)
 	if err != nil {
 		return err
 	}
 
+	//写入交易数量的整数值
 	err = WriteVarInt(w, pver, uint64(len(msg.Transactions)))
 	if err != nil {
 		return err
 	}
 
+	//写入交易列表
 	for _, tx := range msg.Transactions {
 		err = tx.BtcEncode(w, pver, enc)
 		if err != nil {

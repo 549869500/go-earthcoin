@@ -28,6 +28,7 @@ const (
 type InvType uint32
 
 // These constants define the various supported inventory vector types.
+//这些常量定义了各种支持的库存矢量类型。
 const (
 	InvTypeError                InvType = 0
 	InvTypeTx                   InvType = 1
@@ -64,8 +65,8 @@ func (invtype InvType) String() string {
 // InvVect定义比特币库存向量，用于描述对等体想要，
 // 拥有或不具有另一个对等体的类型字段所指定的数据。
 type InvVect struct {
-	Type InvType        // Type of data
-	Hash chainhash.Hash // Hash of the data
+	Type InvType        // Type of data 指明数据的类型，如Tx、Block、或者FilteredBlock;
+	Hash chainhash.Hash // Hash of the data  对应数据的Hash值，如某个transaction的hash或者block头的hash;
 }
 
 // NewInvVect returns a new InvVect using the provided type and hash.

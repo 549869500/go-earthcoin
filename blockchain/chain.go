@@ -39,11 +39,30 @@ const (
 //
 // The block locator for block 17a would be the hashes of blocks:
 // [17a 16a 15 14 13 12 11 10 9 8 7 6 4 genesis]
+// BlockLocator用于帮助定位特定块。 构建块定位器的算法是以相反的顺序添加散列，直到到达生成块。
+// 为了将定位符哈希列表保持为合理数量的条目，首先添加最近的前12个块哈希值，
+// 然后每个循环迭代将步长加倍，以指数方式减少哈希值作为距离的距离的函数。 阻止被定位。
+//
+//例如，假设带有侧链的区块链如下所示：
+// genesis  - > 1  - > 2  - > ...  - > 15  - > 16  - > 17  - > 18
+// 										\  - > 16a  - > 17a
+//
+//块17a的块定位器将是块的散列：
+// [17a 16a 15 14 13 12 11 10 9 8 7 6 4 genesis]
+//
+// 可以看出，BlockLocator实际上是一个*chainhash.Hash类型的slice，用于记录一组block的hash值，
+// slice中的第一个元素即BlockLocator指向的区块。
+// 由于区块链可能分叉，为了指明该区块的位置，BlockLocator记录了从指定区块往创世区块回溯的路径: 
+// BlockLocator中的前10个hash值是指定区块及其后(区块高度更小)的9个区块的hash值，
+// 它们之间的步长为1，第11个元素后步长成级数增加，即每一次向前回溯时，步长翻倍，
+// 使之加快回溯到创世区块，保证了BlockLocator中元素不至于过多。
+// 总之，BlockLocator记录slice中第一个元素代表的区块的位置。
 type BlockLocator []*chainhash.Hash
 
 // orphanBlock represents a block that we don't yet have the parent for.  It
 // is a normal block plus an expiration time to prevent caching the orphan
 // forever.
+// orphanBlock表示我们还没有父节点的块。 这是一个正常的块加上一个到期时间来防止永远缓存孤块
 type orphanBlock struct {
 	block      *btcutil.Block
 	expiration time.Time

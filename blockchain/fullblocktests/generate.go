@@ -17,6 +17,7 @@ import (
 	"math"
 	"runtime"
 	"time"
+	"log"
 
 	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/btcec"
@@ -276,6 +277,7 @@ func uniqueOpReturnScript() []byte {
 // subsidy based on the passed block height.  The coinbase signature script
 // conforms to the requirements of version 2 blocks.
 func (g *testGenerator) createCoinbaseTx(blockHeight int32) *wire.MsgTx {
+	log.Print("start generate createCoinbaseTx")
 	extraNonce := uint64(0)
 	coinbaseScript, err := standardCoinbaseScript(blockHeight, extraNonce)
 	if err != nil {
@@ -436,6 +438,7 @@ func additionalTx(tx *wire.MsgTx) func(*wire.MsgBlock) {
 // script which avoids the need to track addresses and signature scripts in the
 // tests.
 func createSpendTx(spend *spendableOut, fee btcutil.Amount) *wire.MsgTx {
+	log.Print("start generate createSpendTx")
 	spendTx := wire.NewMsgTx(1)
 	spendTx.AddTxIn(&wire.TxIn{
 		PreviousOutPoint: spend.prevOut,

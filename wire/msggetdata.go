@@ -26,6 +26,11 @@ import (
 // 因此，必须使用多条消息来请求更大量的数据。
 //
 // 在向另一个对等方发送getdata消息时，使用AddInvVect函数建立清单向量列表。
+//
+//节点收到Peer的inv通告后，如果发现有更新的区块或者交易，
+//则可以向Peer发送getdata请求来同步区块或者交易。getdata消息比较简单，
+//与inv类似，它的消息体包含了InvVect列表，指明自己希望同步的区块或者交易的hash列表；
+//Peer收到后回复block或tx消息，将区块或者交易发送给节点。
 type MsgGetData struct {
 	InvList []*InvVect
 }

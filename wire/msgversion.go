@@ -29,6 +29,11 @@ const DefaultUserAgent = "/Satoshi:1.5.5.1/"
 // message of its own containing the negotiated values followed by a verack
 // message (MsgVerAck).  This exchange must take place before any further
 // communication is allowed to proceed.
+// MsgVersion实现Message接口并表示比特币版本消息。
+// 一旦建立了出站连接，它就用于对等体自我通告。
+// 然后，远程对等方使用此信息与其自己进行协商。
+// 然后，远程对等体必须使用其自己的版本消息进行响应，该消息包含协商的值，
+// 然后是verack消息（MsgVerAck）。 必须在允许进一步通信之前进行此交换。
 type MsgVersion struct {
 	// Version of the protocol the node is using.
 	ProtocolVersion int32
@@ -58,10 +63,15 @@ type MsgVersion struct {
 
 	// Unique value associated with message that is used to detect self
 	// connections.
+	//与用于检测自连接的消息关联的唯一值。
+	//Nonce是为了防止自己给自己发送version消息
 	Nonce uint64
 
 	// The user agent that generated messsage.  This is a encoded as a varString
 	// on the wire.  This has a max length of MaxUserAgentLen.
+	//UserAgent会被编码为可变长度字符串，它可以用来区别不同的客户端实现；
+	//当前默认的UserAgent是"/btcwire:0.5.0/"，
+	//可以通过AddUserAgent()方法来附加，如当前btcd实现的UserAgent为“/btcwire:0.5.0/0.12.0”
 	UserAgent string
 
 	// Last block seen by the generator of the version message.
@@ -83,6 +93,8 @@ type MsgVersion struct {
 	AddrYou NetAddress
 
 	// Address of the local peer.
+	// 在较新版本(Satoshi:0.14.1及以上)Bitcoin客户端实现中，
+	// AddrMe不再包含本地的IP和Port，因为节点可能通过Proxy上网，填入本地的地址没有意义。
 	AddrMe NetAddress
 
 	Timestamp time.Time
@@ -107,6 +119,16 @@ func (msg *MsgVersion) AddService(service ServiceFlag) {
 // *bytes.Buffer so the number of remaining bytes can be ascertained.
 //
 // This is part of the Message interface implementation.
+// 对版本信息进行解码
+// BtcDecode使用比特币协议编码将r解码到接收器中。
+// 版本消息的特殊之处在于协议版本尚未协商。
+// 因此，将忽略pver字段，并且在新版本中添加的任何字段都是可选的。
+// 这也意味着r必须是* bytes.Buffer，因此可以确定剩余字节数。
+//
+//这是Message接口实现的一部分。
+//
+// 熟悉了version的格式定义后，理解BtcEncode()和BtcDecode()变得非常简单，
+// 它们就是调用writeElement()或readElement等方法对不同的数据类型进行读写。
 func (msg *MsgVersion) BtcDecode(r io.Reader, pver uint32, enc MessageEncoding) error {
 	buf, ok := r.(*bytes.Buffer)
 	if !ok {
@@ -182,6 +204,9 @@ func (msg *MsgVersion) BtcDecode(r io.Reader, pver uint32, enc MessageEncoding) 
 
 // BtcEncode encodes the receiver to w using the bitcoin protocol encoding.
 // This is part of the Message interface implementation.
+// 对版本信息进行编码
+// BtcEncode使用比特币协议编码将接收器编码为w。
+// 这是Message接口实现的一部分。
 func (msg *MsgVersion) BtcEncode(w io.Writer, pver uint32, enc MessageEncoding) error {
 	err := validateUserAgent(msg.UserAgent)
 	if err != nil {

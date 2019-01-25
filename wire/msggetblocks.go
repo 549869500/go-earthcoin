@@ -30,9 +30,26 @@ const MaxBlockLocatorsPerMsg = 500
 // most recent 10 block hashes, then double the step each loop iteration to
 // exponentially decrease the number of hashes the further away from head and
 // closer to the genesis block you get.
+// MsgGetBlocks实现Message接口并表示比特币getblocks消息。
+// 它用于请求块块定位器哈希值中最后一个已知哈希之后开始的块列表。
+// 该列表通过inv消息（MsgInv）返回，并受到停止的特定散列或每个消息的最大块数（当前为500）的限制。
+//
+// 将HashStop字段设置为要停止的哈希值，并使用AddBlockLocatorHash构建块定位符哈希值列表。
+//
+// 构建块定位器哈希的算法应该是以相反的顺序添加哈希值，直到到达创世块。
+// 为了将定位符哈希列表保持为合理数量的条目，首先添加最近的10个块哈希值，
+// 然后将每个循环迭代的步骤加倍，以指数方式减少哈希值，使其距离头部越远，越接近生成块 你得到。
+//
+// getblocks请求的区块位于BlockLocator指向的区块和HashStop指向的区块之间，
+// 不包括BlockLocator指向的区块；如果HashStop为零，则返回BlockLocator指向的区块之后的500个区块。
 type MsgGetBlocks struct {
-	ProtocolVersion    uint32
-	BlockLocatorHashes []*chainhash.Hash
+	//协议的版本号;
+	ProtocolVersion    uint32				
+
+	// 记录一个BlockLocator，BlockLocator用于定位列表中第一个block元素在区块链中的位置;
+	BlockLocatorHashes []*chainhash.Hash	
+
+	//HashStop: getblocks请求的block区间的结束位置;
 	HashStop           chainhash.Hash
 }
 
@@ -85,8 +102,12 @@ func (msg *MsgGetBlocks) BtcDecode(r io.Reader, pver uint32, enc MessageEncoding
 
 // BtcEncode encodes the receiver to w using the bitcoin protocol encoding.
 // This is part of the Message interface implementation.
+// BtcEncode使用比特币协议编码将接收器编码并保存到w。
+//这是Message接口实现的一部分。
 func (msg *MsgGetBlocks) BtcEncode(w io.Writer, pver uint32, enc MessageEncoding) error {
 	count := len(msg.BlockLocatorHashes)
+	//MsgGetBlocks序列化时按顺序写入协议版本号、BlockLocator中hash个数、
+	//BlockLocator中hash列表及截止hash值，这就是getblocks消息体的格式。
 	if count > MaxBlockLocatorsPerMsg {
 		str := fmt.Sprintf("too many block locator hashes for message "+
 			"[count %v, max %v]", count, MaxBlockLocatorsPerMsg)

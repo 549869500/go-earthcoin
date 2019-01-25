@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"log"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 )
@@ -208,10 +209,10 @@ func (o OutPoint) String() string {
 
 // TxIn defines a bitcoin transaction input.
 type TxIn struct {
-	PreviousOutPoint OutPoint
-	SignatureScript  []byte
-	Witness          TxWitness
-	Sequence         uint32
+	PreviousOutPoint OutPoint	//其中的Index即是前一个交易的[]*TxOut中的索引号
+	SignatureScript  []byte		//解锁脚本
+	Witness          TxWitness	//TxWitness定义TxIn的见证。见证者将被解释为一片字节片，或者是一个或多个元素的堆栈
+	Sequence         uint32		//输入交易的序号，对于同一个交易，矿工优先选择Sequence更大的交易加入区块进行挖矿
 }
 
 // SerializeSize returns the number of bytes it would take to serialize the
@@ -259,8 +260,8 @@ func (t TxWitness) SerializeSize() int {
 
 // TxOut defines a bitcoin transaction output.
 type TxOut struct {
-	Value    int64
-	PkScript []byte
+	Value    int64		//bitcoin数量，单位是聪
+	PkScript []byte		//解锁脚本
 }
 
 // SerializeSize returns the number of bytes it would take to serialize the
@@ -286,11 +287,33 @@ func NewTxOut(value int64, pkScript []byte) *TxOut {
 //
 // Use the AddTxIn and AddTxOut functions to build up the list of transaction
 // inputs and outputs.
+// MsgTx实现Message接口并表示比特币tx消息。
+//它用于响应给定事务的getdata消息（MsgGetData）传递事务信息。
+//
+//使用AddTxIn和AddTxOut函数构建事务输入和输出列表。
 type MsgTx struct {
-	Version  int32
-	TxIn     []*TxIn
-	TxOut    []*TxOut
-	LockTime uint32
+	//Tx的版本号，当前版本号为1；高版本的Tx对LockTime或TxIn中的Sequence的使用不一样;
+	Version  int32		
+	
+	//引用的输入交易的UTXO(s)，包含上一个交易的hash值和Index。
+	//Index表示上一个交易的输出的序号(因为上一个交易的输出UTXO可能有多个，序号从0开始)
+	//SignatureScript是解锁脚本；
+	//Sequence表示输入交易的序号，对于同一个交易，“矿工”优先选择Sequence更大的交易加入区块进行挖矿，
+	//但如果其值为0xffffffff，则表明该交易可以被加进任何区块;
+	TxIn     []*TxIn	
+
+	//当前交易的输出UTXO(s)，它包含解锁脚本和输出的Bitcoin数量，
+	//这里Value的单位是“聪”，即千万分之一比特币。
+	//PreviousOutPoint中的Index即是前一个交易的[]*TxOut中的索引号;
+	TxOut    []*TxOut	//当前交易的输出UTXO(s)
+
+	//LockTime: 既可以表示UTC时间，也可以表示区块高度。
+	//当其值小于 5x 10^8 (Tue Nov 5 00:53:20 1985 UTC) 时，它表示区块高度。
+	//交易只能被打包进大于该高度值或者在该时间点后的区块中。
+	//如果其值为0，表明该交易可以加入任何区块中。
+	//版本2及以上的交易结构引入了相对锁定时间(RLT, relative lock-time)的概念，
+	//联合LockTime和TxIn的Sequence字段来控制“矿工”节点能否将一个交易打包到某个区块中
+	LockTime uint32		
 }
 
 // AddTxIn adds a transaction input to the message.
@@ -304,11 +327,20 @@ func (msg *MsgTx) AddTxOut(to *TxOut) {
 }
 
 // TxHash generates the Hash for the transaction.
+// TxHash为交易生成哈希值。
+//交易的Hash是整个交易结构的字节流进行两次SHA256()后的结果。
+//其中，Serialize()方法就是调用BtcEncode()对MsgTx进行序列化。
+//BtcEncode()或BtcDecode()就是按MsgTx的定义逐元素写或者读，逻辑比较清晰，我们不再赘述。
+//需要注意的是，在BtcDecode()中，对锁定脚本或解锁脚本的读取用到了scriptFreeList，
+//它类似于前面介绍过的binaryFreeList，也是用channel实现的“内存池”，读者可以自行分析。
 func (msg *MsgTx) TxHash() chainhash.Hash {
 	// Encode the transaction and calculate double sha256 on the result.
 	// Ignore the error returns since the only way the encode could fail
 	// is being out of memory or due to nil pointers, both of which would
 	// cause a run-time panic.
+	//对事务进行编码并在结果上计算double sha256。
+	//忽略错误返回，因为编码失败的唯一方法是内存不足或由于nil指针，这两者都会导致运行时混乱。
+	//交易的Hash是整个交易结构的字节流进行两次SHA256()后的结果
 	buf := bytes.NewBuffer(make([]byte, 0, msg.SerializeSizeStripped()))
 	_ = msg.SerializeNoWitness(buf)
 	return chainhash.DoubleHashH(buf.Bytes())
@@ -410,15 +442,19 @@ func (msg *MsgTx) Copy() *MsgTx {
 // database, as opposed to decoding transactions from the wire.
 func (msg *MsgTx) BtcDecode(r io.Reader, pver uint32, enc MessageEncoding) error {
 	version, err := binarySerializer.Uint32(r, littleEndian)
+	log.Printf("Enter msttx.BtcDecode..")
 	if err != nil {
 		return err
 	}
 	msg.Version = int32(version)
 
+	log.Printf("Start msttx.BtcDecode.. a ReadVarInt pver: %d", pver)
 	count, err := ReadVarInt(r, pver)
 	if err != nil {
 		return err
 	}
+
+	log.Printf("txIn count: %d ", count)
 
 	// A count of zero (meaning no TxIn's to the uninitiated) indicates
 	// this is a transaction with witness data.
@@ -438,6 +474,7 @@ func (msg *MsgTx) BtcDecode(r io.Reader, pver uint32, enc MessageEncoding) error
 
 		// With the Segregated Witness specific fields decoded, we can
 		// now read in the actual txin count.
+		log.Printf("Enter msttx.BtcDecode.. WitnessEncoding ReadVarInt")
 		count, err = ReadVarInt(r, pver)
 		if err != nil {
 			return err
@@ -459,6 +496,8 @@ func (msg *MsgTx) BtcDecode(r io.Reader, pver uint32, enc MessageEncoding) error
 	// errors.  This is only valid to call before the final step which
 	// replaces the scripts with the location in a contiguous buffer and
 	// returns them.
+	// returnScriptBuffers是一个闭包，它返回任何反序列化错误时从池中借来的脚本缓冲区。
+	// 这仅在最后一步之前调用，该脚本将脚本替换为连续缓冲区中的位置并返回它们。
 	returnScriptBuffers := func() {
 		for _, txIn := range msg.TxIn {
 			if txIn == nil {
@@ -493,6 +532,7 @@ func (msg *MsgTx) BtcDecode(r io.Reader, pver uint32, enc MessageEncoding) error
 		ti := &txIns[i]
 		msg.TxIn[i] = ti
 		err = readTxIn(r, pver, msg.Version, ti)
+		log.Printf("Enter msttx.BtcDecode.. readTxIn ReadVarInt count: %d, i: %d, ti: %d", count, i, ti)
 		if err != nil {
 			returnScriptBuffers()
 			return err
@@ -500,6 +540,7 @@ func (msg *MsgTx) BtcDecode(r io.Reader, pver uint32, enc MessageEncoding) error
 		totalScriptSize += uint64(len(ti.SignatureScript))
 	}
 
+	log.Printf("start msttx.BtcDecode.. c ReadVarInt pver: %d", pver)
 	count, err = ReadVarInt(r, pver)
 	if err != nil {
 		returnScriptBuffers()
@@ -517,16 +558,22 @@ func (msg *MsgTx) BtcDecode(r io.Reader, pver uint32, enc MessageEncoding) error
 		return messageError("MsgTx.BtcDecode", str)
 	}
 
+	//log.Printf("Start msttx.BtcDecode.. Deserialize the outputs")
 	// Deserialize the outputs.
-	txOuts := make([]TxOut, count)
+	txOuts := make([]TxOut, count)	// txOuts: [{0 []}] 
+	log.Printf("Start msttx.BtcDecode.. Deserialize the outputs, txOuts: %d ", txOuts)
 	msg.TxOut = make([]*TxOut, count)
 	//遍历读取TxOut对象
 	for i := uint64(0); i < count; i++ {
 		// The pointer is set now in case a script buffer is borrowed
 		// and needs to be returned to the pool on error.
+		//现在设置指针，以防借用脚本缓冲区并在出错时需要返回到池中。
 		to := &txOuts[i]
 		msg.TxOut[i] = to
+		
+		//从消息里面读取txOut到to
 		err = readTxOut(r, pver, msg.Version, to)
+		log.Printf("Enter msttx.BtcDecode.. readTxOut ReadVarInt count: %d, i: %d, value: %d, to: %d", count, i, to.Value, to)
 		if err != nil {
 			returnScriptBuffers()
 			return err
@@ -541,6 +588,7 @@ func (msg *MsgTx) BtcDecode(r io.Reader, pver uint32, enc MessageEncoding) error
 			// For each input, the witness is encoded as a stack
 			// with one or more items. Therefore, we first read a
 			// varint which encodes the number of stack items.
+			log.Printf("Enter msttx.BtcDecode.. 0x00 WitnessEncoding ReadVarInt")
 			witCount, err := ReadVarInt(r, pver)
 			if err != nil {
 				returnScriptBuffers()
@@ -562,6 +610,7 @@ func (msg *MsgTx) BtcDecode(r io.Reader, pver uint32, enc MessageEncoding) error
 			// item itself.
 			txin.Witness = make([][]byte, witCount)
 			for j := uint64(0); j < witCount; j++ {
+				log.Printf("Enter msttx.BtcDecode.. readScript ReadVarInt")
 				txin.Witness[j], err = readScript(r, pver,
 					maxWitnessItemSize, "script witness item")
 				if err != nil {
@@ -578,6 +627,8 @@ func (msg *MsgTx) BtcDecode(r io.Reader, pver uint32, enc MessageEncoding) error
 		returnScriptBuffers()
 		return err
 	}
+
+	log.Printf("Enter msttx.BtcDecode.. dd")
 
 	// Create a single allocation to house all of the scripts and set each
 	// input signature script and output public key script to the
@@ -933,18 +984,40 @@ func writeOutPoint(w io.Writer, pver uint32, version int32, op *OutPoint) error 
 // 该参数有助于防止内存耗尽攻击并通过格式错误的消息强制恐慌。
 // fieldName参数仅用于错误消息，因此它在错误中提供了更多上下文。
 func readScript(r io.Reader, pver uint32, maxAllowed uint32, fieldName string) ([]byte, error) {
+	// -- by eac debug
+	//r2 := r
+	//discriminant, _ := binarySerializer.Uint8(r2)
+	
 	count, err := ReadVarInt(r, pver)
 	if err != nil {
 		return nil, err
 	}
+
+	
 
 	// Prevent byte array larger than the max message size.  It would
 	// be possible to cause memory exhaustion and panics without a sane
 	// upper bound on this count.
 	//防止字节数组大于最大邮件大小。 有可能导致内存耗尽和恐慌而没有这个计数的合理上限。
 	if count > uint64(maxAllowed) {
+		// -- by eac debug
+		
+		// vInt := "";
+		// switch discriminant {
+		// case 0xff:
+		// 	vInt = "0xff"
+		// case 0xfe:
+		// 	vInt = "0xfe"
+		// case 0xfd:
+		// 	vInt = "0xfd"
+		// default:
+		// 	vInt = vInt + "__default"
+		// }
+		// rv := uint64(discriminant)
+
 		str := fmt.Sprintf("%s is larger than the max allowed size "+
-			"[count %d, max %d]", fieldName, count, maxAllowed)
+			"[count %d, max %d] ",//,discriminant: %d, vInt: %s, rv: %d",
+			 fieldName, count, maxAllowed)//, discriminant, vInt, rv)
 		return nil, messageError("readScript", str)
 	}
 
@@ -994,11 +1067,13 @@ func writeTxIn(w io.Writer, pver uint32, version int32, ti *TxIn) error {
 // (TxOut).
 // readTxOut从r读取下一个字节序列作为事务输出（TxOut）。
 func readTxOut(r io.Reader, pver uint32, version int32, to *TxOut) error {
+	//读取第一个参数:to.Value
 	err := readElement(r, &to.Value)
 	if err != nil {
 		return err
 	}
 
+	//读取第二个参数：to.PkScript
 	to.PkScript, err = readScript(r, pver, MaxMessagePayload,
 		"transaction output public key script")
 	return err
